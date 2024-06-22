@@ -1,2 +1,24 @@
-/.DS_Store
-/include/SpinnakerSDKsrc
+# Ignore DS_Store files
+.DS_Store
+
+# Ignore build directories
+/build/
+/bin/
+/obj/
+
+# Ignore CMake build files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore Visual Studio files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+
+# Ignore other OS-generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
