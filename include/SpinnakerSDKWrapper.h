@@ -6,10 +6,10 @@
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDKNamespace.h"
 
-class SpinnakerSDKWrapper {
+class SpinCamera {
 public:
-    SpinnakerSDKWrapper();
-    ~SpinnakerSDKWrapper();
+    SpinCamera();
+    ~SpinCamera();
 
     bool Initialize();
     bool StartAcquisition();
@@ -17,10 +17,10 @@ public:
     bool CaptureImage(const std::string& imagePath);
     void Shutdown();
     int SetCameraSettings();
-    void SetPixelFormat(SpinOptions::PixelFormat);
-    void SetBinning(SpinOptions::Binning);
-    void SetDecimation(SpinOptions::Decimation);
-    void SetExposureTime(SpinOptions::ExposureTime);
+    void SetPixelFormat(SpinOption::PixelFormat);
+    void SetBinning(SpinOption::Binning);
+    void SetDecimation(SpinOption::Decimation);
+    void SetExposureTime(SpinOption::ExposureTime);
     void SetExposureTime(double);
     void SetImageDimensions();
     void SetGainSensitivity();

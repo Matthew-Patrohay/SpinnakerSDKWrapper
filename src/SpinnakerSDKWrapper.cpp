@@ -5,13 +5,13 @@
 using namespace Spinnaker;
 using namespace GenApi;
 
-SpinnakerSDKWrapper::SpinnakerSDKWrapper() : pCam(nullptr), system(nullptr), nodeMap(nullptr) {}
+SpinCamera::SpinCamera() : pCam(nullptr), system(nullptr), nodeMap(nullptr) {}
 
-SpinnakerSDKWrapper::~SpinnakerSDKWrapper() {
+SpinCamera::~SpinCamera() {
     Shutdown();
 }
 
-bool SpinnakerSDKWrapper::Initialize() {
+bool SpinCamera::Initialize() {
     system = System::GetInstance();
     camList = system->GetCameras();
     if (camList.GetSize() == 0) {
@@ -23,19 +23,19 @@ bool SpinnakerSDKWrapper::Initialize() {
     return true;
 }
 
-bool SpinnakerSDKWrapper::StartAcquisition() {
+bool SpinCamera::StartAcquisition() {
     if (!pCam) return false;
     pCam->BeginAcquisition();
     return true;
 }
 
-bool SpinnakerSDKWrapper::StopAcquisition() {
+bool SpinCamera::StopAcquisition() {
     if (!pCam) return false;
     pCam->EndAcquisition();
     return true;
 }
 
-bool SpinnakerSDKWrapper::CaptureImage(const std::string& imagePath) {
+bool SpinCamera::CaptureImage(const std::string& imagePath) {
     if (!pCam) return false;
 
     try {
@@ -55,7 +55,7 @@ bool SpinnakerSDKWrapper::CaptureImage(const std::string& imagePath) {
     return true;
 }
 
-void SpinnakerSDKWrapper::Shutdown() {
+void SpinCamera::Shutdown() {
     if (pCam) {
         pCam->DeInit();
         pCam = nullptr;
@@ -67,13 +67,13 @@ void SpinnakerSDKWrapper::Shutdown() {
     }
 }
 
-int SpinnakerSDKWrapper::SetCameraSettings() {
+int SpinCamera::SetCameraSettings() {
     if (!nodeMap) return -1;
 
-    SetPixelFormat(SpinOptions::PixelFormat::BayerRG8);   // Default format for testing
-    SetBinning(SpinOptions::Binning::NoBinning);          // Default to no binning
-    SetDecimation(SpinOptions::Decimation::NoDecimation); // Default to no decimation
-    SetExposureTime(SpinOptions::ExposureTime::Shutter_1_1000);
+    SetPixelFormat(SpinOption::PixelFormat::BayerRG8);   // Default format for testing
+    SetBinning(SpinOption::Binning::NoBinning);          // Default to no binning
+    SetDecimation(SpinOption::Decimation::NoDecimation); // Default to no decimation
+    SetExposureTime(SpinOption::ExposureTime::Shutter_1_1000);
     SetImageDimensions();
     SetGainSensitivity();
     SetGammaCorrection();
@@ -86,18 +86,18 @@ int SpinnakerSDKWrapper::SetCameraSettings() {
 }
 
 
-void SpinnakerSDKWrapper::SetPixelFormat(SpinOptions::PixelFormat format) {
+void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
 
     // All legal options
-    const std::unordered_map<SpinOptions::PixelFormat, std::string> PixelFormat_legal = {
-        {SpinOptions::PixelFormat::BayerRG8,   "BayerRG8"},
-        {SpinOptions::PixelFormat::BayerRG10p, "BayerRG10p"},
-        {SpinOptions::PixelFormat::BayerRG12p, "BayerRG12p"},
-        {SpinOptions::PixelFormat::BayerRG16,  "BayerRG16"},
-        {SpinOptions::PixelFormat::Mono8,      "Mono8"},
-        {SpinOptions::PixelFormat::Mono10p,    "Mono10p"},
-        {SpinOptions::PixelFormat::Mono12p,    "Mono12p"},
-        {SpinOptions::PixelFormat::Mono16,     "Mono16"}
+    const std::unordered_map<SpinOption::PixelFormat, std::string> PixelFormat_legal = {
+        {SpinOption::PixelFormat::BayerRG8,   "BayerRG8"},
+        {SpinOption::PixelFormat::BayerRG10p, "BayerRG10p"},
+        {SpinOption::PixelFormat::BayerRG12p, "BayerRG12p"},
+        {SpinOption::PixelFormat::BayerRG16,  "BayerRG16"},
+        {SpinOption::PixelFormat::Mono8,      "Mono8"},
+        {SpinOption::PixelFormat::Mono10p,    "Mono10p"},
+        {SpinOption::PixelFormat::Mono12p,    "Mono12p"},
+        {SpinOption::PixelFormat::Mono16,     "Mono16"}
     };
 
     // Ensure nodemap exists
@@ -135,13 +135,13 @@ void SpinnakerSDKWrapper::SetPixelFormat(SpinOptions::PixelFormat format) {
     }
 }
 
-void SpinnakerSDKWrapper::SetBinning(SpinOptions::Binning user_option) {
+void SpinCamera::SetBinning(SpinOption::Binning user_option) {
 
     // All legal options
-    const std::unordered_map<SpinOptions::Binning, int> Binning_legal = {
-        {SpinOptions::Binning::NoBinning,         1},
-        {SpinOptions::Binning::TwoByTwoBinning,   2},
-        {SpinOptions::Binning::FourByFourBinning, 4},
+    const std::unordered_map<SpinOption::Binning, int> Binning_legal = {
+        {SpinOption::Binning::NoBinning,         1},
+        {SpinOption::Binning::TwoByTwoBinning,   2},
+        {SpinOption::Binning::FourByFourBinning, 4},
     };
 
     // Ensure nodemap exists
@@ -175,13 +175,13 @@ void SpinnakerSDKWrapper::SetBinning(SpinOptions::Binning user_option) {
     }
 }
 
-void SpinnakerSDKWrapper::SetDecimation(SpinOptions::Decimation user_option) {
+void SpinCamera::SetDecimation(SpinOption::Decimation user_option) {
 
     // All legal options
-    const std::unordered_map<SpinOptions::Decimation, int> Decimation_legal = {
-        {SpinOptions::Decimation::NoDecimation,       1},
-        {SpinOptions::Decimation::TwoByTwoDecimation, 2},
-        {SpinOptions::Decimation::FourByFourDecimation, 4},
+    const std::unordered_map<SpinOption::Decimation, int> Decimation_legal = {
+        {SpinOption::Decimation::NoDecimation,       1},
+        {SpinOption::Decimation::TwoByTwoDecimation, 2},
+        {SpinOption::Decimation::FourByFourDecimation, 4},
     };
 
     // Ensure nodemap exists
@@ -215,43 +215,43 @@ void SpinnakerSDKWrapper::SetDecimation(SpinOptions::Decimation user_option) {
     }
 }
 
-void SpinnakerSDKWrapper::SetExposureTime(SpinOptions::ExposureTime user_option) {
+void SpinCamera::SetExposureTime(SpinOption::ExposureTime user_option) {
     // All legal options
-    const std::unordered_map<SpinOptions::ExposureTime, double> ExposureTime_legal = {
-        {SpinOptions::ExposureTime::Auto,           0},
-        {SpinOptions::ExposureTime::MinimumValue,   INT_MIN},
-        {SpinOptions::ExposureTime::MaximumValue,   INT_MAX},
-        {SpinOptions::ExposureTime::Preset_10us,    10},
-        {SpinOptions::ExposureTime::Preset_20us,    20},
-        {SpinOptions::ExposureTime::Preset_50us,    50},
-        {SpinOptions::ExposureTime::Preset_100us,   100},
-        {SpinOptions::ExposureTime::Preset_200us,   200},
-        {SpinOptions::ExposureTime::Preset_500us,   500},
-        {SpinOptions::ExposureTime::Preset_1ms,     1000},
-        {SpinOptions::ExposureTime::Preset_2ms,     2000},
-        {SpinOptions::ExposureTime::Preset_5ms,     5000},
-        {SpinOptions::ExposureTime::Preset_10ms,    10000},
-        {SpinOptions::ExposureTime::Preset_20ms,    20000},
-        {SpinOptions::ExposureTime::Preset_50ms,    50000},
-        {SpinOptions::ExposureTime::Preset_100ms,   100000},
-        {SpinOptions::ExposureTime::Preset_200ms,   200000},
-        {SpinOptions::ExposureTime::Preset_500ms,   500000},
-        {SpinOptions::ExposureTime::Preset_1s,      1000000},
-        {SpinOptions::ExposureTime::Preset_2s,      2000000},
-        {SpinOptions::ExposureTime::Preset_5s,      5000000},
-        {SpinOptions::ExposureTime::Preset_10s,     10000000},
-        {SpinOptions::ExposureTime::Preset_20s,     20000000},
-        {SpinOptions::ExposureTime::Shutter_1_1000, 1000},
-        {SpinOptions::ExposureTime::Shutter_1_500,  2000},
-        {SpinOptions::ExposureTime::Shutter_1_250,  4000},
-        {SpinOptions::ExposureTime::Shutter_1_125,  8000},
-        {SpinOptions::ExposureTime::Shutter_1_60,   16667},
-        {SpinOptions::ExposureTime::Shutter_1_30,   33333},
-        {SpinOptions::ExposureTime::Shutter_1_15,   66667},
-        {SpinOptions::ExposureTime::Shutter_1_8,    125000},
-        {SpinOptions::ExposureTime::Shutter_1_4,    250000},
-        {SpinOptions::ExposureTime::Shutter_1_2,    500000},
-        {SpinOptions::ExposureTime::Shutter_1_1,    1000000}
+    const std::unordered_map<SpinOption::ExposureTime, double> ExposureTime_legal = {
+        {SpinOption::ExposureTime::Auto,           0},
+        {SpinOption::ExposureTime::MinimumValue,   INT_MIN},
+        {SpinOption::ExposureTime::MaximumValue,   INT_MAX},
+        {SpinOption::ExposureTime::Preset_10us,    10},
+        {SpinOption::ExposureTime::Preset_20us,    20},
+        {SpinOption::ExposureTime::Preset_50us,    50},
+        {SpinOption::ExposureTime::Preset_100us,   100},
+        {SpinOption::ExposureTime::Preset_200us,   200},
+        {SpinOption::ExposureTime::Preset_500us,   500},
+        {SpinOption::ExposureTime::Preset_1ms,     1000},
+        {SpinOption::ExposureTime::Preset_2ms,     2000},
+        {SpinOption::ExposureTime::Preset_5ms,     5000},
+        {SpinOption::ExposureTime::Preset_10ms,    10000},
+        {SpinOption::ExposureTime::Preset_20ms,    20000},
+        {SpinOption::ExposureTime::Preset_50ms,    50000},
+        {SpinOption::ExposureTime::Preset_100ms,   100000},
+        {SpinOption::ExposureTime::Preset_200ms,   200000},
+        {SpinOption::ExposureTime::Preset_500ms,   500000},
+        {SpinOption::ExposureTime::Preset_1s,      1000000},
+        {SpinOption::ExposureTime::Preset_2s,      2000000},
+        {SpinOption::ExposureTime::Preset_5s,      5000000},
+        {SpinOption::ExposureTime::Preset_10s,     10000000},
+        {SpinOption::ExposureTime::Preset_20s,     20000000},
+        {SpinOption::ExposureTime::Shutter_1_1000, 1000},
+        {SpinOption::ExposureTime::Shutter_1_500,  2000},
+        {SpinOption::ExposureTime::Shutter_1_250,  4000},
+        {SpinOption::ExposureTime::Shutter_1_125,  8000},
+        {SpinOption::ExposureTime::Shutter_1_60,   16667},
+        {SpinOption::ExposureTime::Shutter_1_30,   33333},
+        {SpinOption::ExposureTime::Shutter_1_15,   66667},
+        {SpinOption::ExposureTime::Shutter_1_8,    125000},
+        {SpinOption::ExposureTime::Shutter_1_4,    250000},
+        {SpinOption::ExposureTime::Shutter_1_2,    500000},
+        {SpinOption::ExposureTime::Shutter_1_1,    1000000}
     };
 
     // Ensure nodemap exists
@@ -273,7 +273,7 @@ void SpinnakerSDKWrapper::SetExposureTime(SpinOptions::ExposureTime user_option)
     if (!IsReadable(ptrExposureAuto) || !IsWritable(ptrExposureAuto)) {
         std::cout << "[ WARNING ] Unable to set exposure" << std::endl;
     }
-    if (user_option == SpinOptions::ExposureTime::Auto) {
+    if (user_option == SpinOption::ExposureTime::Auto) {
         CEnumEntryPtr ptrExposureAutoOn = ptrExposureAuto->GetEntryByName("On");
         if (IsReadable(ptrExposureAutoOn)) {
             ptrExposureAuto->SetIntValue(ptrExposureAutoOn->GetValue());
@@ -318,7 +318,7 @@ void SpinnakerSDKWrapper::SetExposureTime(SpinOptions::ExposureTime user_option)
     }
 }
 
-void SpinnakerSDKWrapper::SetExposureTime(double user_exposure_time) {
+void SpinCamera::SetExposureTime(double user_exposure_time) {
     
     // Ensure nodemap exists
     if (!nodeMap) {
@@ -359,26 +359,26 @@ void SpinnakerSDKWrapper::SetExposureTime(double user_exposure_time) {
     }
 }
 
-void SpinnakerSDKWrapper::SetImageDimensions() {
+void SpinCamera::SetImageDimensions() {
     // Your implementation for setting image dimensions
 }
 
-void SpinnakerSDKWrapper::SetGainSensitivity() {
+void SpinCamera::SetGainSensitivity() {
     // Your implementation for setting gain sensitivity
 }
 
-void SpinnakerSDKWrapper::SetGammaCorrection() {
+void SpinCamera::SetGammaCorrection() {
     // Your implementation for setting gamma correction
 }
 
-void SpinnakerSDKWrapper::SetBlackLevel() {
+void SpinCamera::SetBlackLevel() {
     // Your implementation for setting black level
 }
 
-void SpinnakerSDKWrapper::SetRedBalanceRatio() {
+void SpinCamera::SetRedBalanceRatio() {
     // Your implementation for setting red balance ratio
 }
 
-void SpinnakerSDKWrapper::SetBlueBalanceRatio() {
+void SpinCamera::SetBlueBalanceRatio() {
     // Your implementation for setting blue balance ratio
 }

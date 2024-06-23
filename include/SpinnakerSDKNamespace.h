@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string>
 
-namespace SpinOptions {
+namespace SpinOption {
     // Available Pixel Data formats
     enum class PixelFormat {
         BayerRG8,    // 8-bit color data
