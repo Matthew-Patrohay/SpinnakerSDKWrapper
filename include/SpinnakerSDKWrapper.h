@@ -6,8 +6,6 @@
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDKNamespace.h"
 
-using namespace SpinnakerSDKNamespace;
-
 class SpinnakerSDKWrapper {
 public:
     SpinnakerSDKWrapper();
@@ -19,10 +17,11 @@ public:
     bool CaptureImage(const std::string& imagePath);
     void Shutdown();
     int SetCameraSettings();
-    void SetPixelFormat(PixelFormat format);
-    void SetBinning();
-    void SetDecimation();
-    void SetExposureTime();
+    void SetPixelFormat(SpinOptions::PixelFormat);
+    void SetBinning(SpinOptions::Binning);
+    void SetDecimation(SpinOptions::Decimation);
+    void SetExposureTime(SpinOptions::ExposureTime);
+    void SetExposureTime(double);
     void SetImageDimensions();
     void SetGainSensitivity();
     void SetGammaCorrection();
