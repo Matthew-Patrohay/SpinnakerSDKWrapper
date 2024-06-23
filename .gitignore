@@ -1,5 +1,7 @@
-# Ignore DS_Store files
+# Ignore DS_Store files and VSCode Files
 .DS_Store
+.vscode/
+.vscode/*
 
 # Ignore build directories
 /build/

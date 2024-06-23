@@ -1,10 +1,13 @@
 #include "../include/SpinnakerSDKWrapper.h"
+#include "../include/SpinnakerSDKNamespace.h"
 #include <iostream>
+
+using namespace SpinnakerSDKNamespace;
 
 int main() {
     SpinnakerSDKWrapper camera;
     if (camera.Initialize()) {
-        camera.SetPixelFormat(SpinnakerSDKWrapper::PixelFormat::BayerRG8); // Correct usage
+        camera.SetPixelFormat(PixelFormat::BayerRG8);
         camera.StartAcquisition();
         camera.CaptureImage("example_image.jpg");
         camera.StopAcquisition();
