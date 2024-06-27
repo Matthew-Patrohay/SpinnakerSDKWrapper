@@ -74,7 +74,7 @@ void SpinCamera::SetDefaultSettings() {
     SetExposureTime(SpinOption::ExposureTime::Shutter_1_1000);
     SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
     SetGainSensitivity(SpinOption::GainSensitivity::Preset_18dB);
-    SetGammaCorrection();
+    SetGammaCorrection(SpinOption::GammaCorrection::Preset_1_00);
     SetBlackLevel();
     SetRedBalanceRatio();
     SetBlueBalanceRatio();
@@ -262,14 +262,17 @@ void SpinCamera::SetExposureTime(SpinOption::ExposureTime user_option) {
     }
     const double& exposureTime = option->second;
 
-    // If auto mode is selected, then set to auto mode and return, otherwise, make sure its manual mode
+    // Set exposure mode to auto or manual based on user option
     CEnumerationPtr ptrExposureAuto = nodeMap->GetNode("ExposureAuto");
     if (!IsReadable(ptrExposureAuto) || !IsWritable(ptrExposureAuto)) {
-        std::cout << "[ WARNING ] Unable to set exposure" << std::endl;
+        std::cout << "[ WARNING ] Unable to set exposure mode" << std::endl;
+        return;
     }
+
     if (user_option == SpinOption::ExposureTime::Auto) {
-        CEnumEntryPtr ptrExposureAutoOn = ptrExposureAuto->GetEntryByName("On");
-        if (IsReadable(ptrExposureAutoOn)) {
+        // Attempt to enable automatic exposure
+        CEnumEntryPtr ptrExposureAutoOn = ptrExposureAuto->GetEntryByName("Continuous");
+        if (IsReadable(ptrExposureAutoOn) && IsWritable(ptrExposureAutoOn)) {
             ptrExposureAuto->SetIntValue(ptrExposureAutoOn->GetValue());
             std::cout << "Auto Exposure Enabled" << std::endl;
         } else {
@@ -277,12 +280,13 @@ void SpinCamera::SetExposureTime(SpinOption::ExposureTime user_option) {
         }
         return;
     } else {
+        // Attempt to disable automatic exposure
         CEnumEntryPtr ptrExposureAutoOff = ptrExposureAuto->GetEntryByName("Off");
-        if (IsReadable(ptrExposureAutoOff)) {
+        if (IsReadable(ptrExposureAutoOff) && IsWritable(ptrExposureAutoOff)) {
             ptrExposureAuto->SetIntValue(ptrExposureAutoOff->GetValue());
             std::cout << "Manual Exposure Enabled (Automatic exposure disabled)" << std::endl;
         } else {
-            std::cout << "[ WARNING ] Unable to enable manual exposure (disable automatic exposure)" << std::endl;
+            std::cout << "[ WARNING ] Unable to disable automatic exposure (enable manual exposure)" << std::endl;
         }
     }
 
@@ -552,6 +556,7 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
 void SpinCamera::SetGainSensitivity(SpinOption::GainSensitivity user_option) {
     // All legal options
     const std::unordered_map<SpinOption::GainSensitivity, float> GainSensitivity_legal = {
+        {SpinOption::GainSensitivity::Auto, 0.0f},
         {SpinOption::GainSensitivity::Preset_0dB, 0.0f},
         {SpinOption::GainSensitivity::Preset_3dB, 3.0f},
         {SpinOption::GainSensitivity::Preset_6dB, 6.0f},
@@ -591,17 +596,34 @@ void SpinCamera::SetGainSensitivity(SpinOption::GainSensitivity user_option) {
     }
     const float& gainSensitivity = option->second;
 
-    // Ensure automatic gain is off to allow manual setting
+    // Set gain mode to auto or manual based on user option
     CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
-    if (IsReadable(ptrGainAuto) && IsWritable(ptrGainAuto)) {
+    if (!IsReadable(ptrGainAuto) || !IsWritable(ptrGainAuto)) {
+        std::cout << "[ WARNING ] Unable to set gain mode" << std::endl;
+        return;
+    }
+
+    if (user_option == SpinOption::GainSensitivity::Auto) {
+        // Attempt to enable automatic gain
+        CEnumEntryPtr ptrGainAutoOn = ptrGainAuto->GetEntryByName("Continuous");
+        if (IsReadable(ptrGainAutoOn) && IsWritable(ptrGainAutoOn)) {
+            ptrGainAuto->SetIntValue(ptrGainAutoOn->GetValue());
+            std::cout << "Auto Gain Enabled" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to enable automatic gain" << std::endl;
+        }
+        return;
+    } else {
+        // Attempt to disable automatic gain
         CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
-        if (IsReadable(ptrGainAutoOff)) {
+        if (IsReadable(ptrGainAutoOff) && IsWritable(ptrGainAutoOff)) {
             ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
             std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic gain (enable manual gain)" << std::endl;
         }
-    } else {
-        std::cout << "[ WARNING ] Unable to disable automatic gain" << std::endl;
     }
+
 
     // Apply user-selected gain sensitivity
     CFloatPtr ptrGain = nodeMap->GetNode("Gain");
@@ -667,8 +689,132 @@ void SpinCamera::SetGainSensitivity(float user_gain_sensitivity) {
     }
 }
 
-void SpinCamera::SetGammaCorrection() {
-    // Your implementation for setting gamma correction
+void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
+    // All legal options for GammaCorrection
+    const std::unordered_map<SpinOption::GammaCorrection, float> GammaCorrection_legal = {
+        {SpinOption::GammaCorrection::Auto, 0.0f},
+        {SpinOption::GammaCorrection::Preset_0_00, 0.00f},
+        {SpinOption::GammaCorrection::Preset_0_25, 0.25f},
+        {SpinOption::GammaCorrection::Preset_0_50, 0.50f},
+        {SpinOption::GammaCorrection::Preset_0_75, 0.75f},
+        {SpinOption::GammaCorrection::Preset_1_00, 1.00f},
+        {SpinOption::GammaCorrection::Preset_1_25, 1.25f},
+        {SpinOption::GammaCorrection::Preset_1_50, 1.50f},
+        {SpinOption::GammaCorrection::Preset_1_75, 1.75f},
+        {SpinOption::GammaCorrection::Preset_2_00, 2.00f},
+        {SpinOption::GammaCorrection::Preset_2_25, 2.25f},
+        {SpinOption::GammaCorrection::Preset_2_50, 2.50f},
+        {SpinOption::GammaCorrection::Preset_2_75, 2.75f},
+        {SpinOption::GammaCorrection::Preset_3_00, 3.00f}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Get the selected gamma correction value from the map
+    auto option = GammaCorrection_legal.find(user_option);
+    if (option == GammaCorrection_legal.end()) {
+        std::cout << "[ WARNING ] Invalid gamma correction option." << std::endl;
+        return;
+    }
+    const float& gammaValue = option->second;
+
+    // Set gamma mode to auto or manual based on user option
+    CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
+    if (!IsReadable(ptrGammaAuto) || !IsWritable(ptrGammaAuto)) {
+        std::cout << "[ WARNING ] Unable to set gamma mode" << std::endl;
+        return;
+    }
+
+    if (user_option == SpinOption::GammaCorrection::Auto) {
+        // Attempt to enable automatic gamma
+        CEnumEntryPtr ptrGammaAutoOn = ptrGammaAuto->GetEntryByName("Continuous");
+        if (IsReadable(ptrGammaAutoOn) && IsWritable(ptrGammaAutoOn)) {
+            ptrGammaAuto->SetIntValue(ptrGammaAutoOn->GetValue());
+            std::cout << "Auto Gamma Enabled" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to enable automatic gamma" << std::endl;
+        }
+        return;
+    } else {
+        // Attempt to disable automatic gamma
+        CEnumEntryPtr ptrGammaAutoOff = ptrGammaAuto->GetEntryByName("Off");
+        if (IsReadable(ptrGammaAutoOff) && IsWritable(ptrGammaAutoOff)) {
+            ptrGammaAuto->SetIntValue(ptrGammaAutoOff->GetValue());
+            std::cout << "Manual Gamma Enabled (Automatic gamma disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic gamma (enable manual gamma)" << std::endl;
+        }
+    }
+
+    // Apply user-selected gamma correction
+    CFloatPtr ptrGamma = nodeMap->GetNode("Gamma");
+    if (IsAvailable(ptrGamma) && IsWritable(ptrGamma)) {
+        const float gammaMax = static_cast<float>(ptrGamma->GetMax());
+        const float gammaMin = static_cast<float>(ptrGamma->GetMin());
+        float finalGammaValue = gammaValue;
+
+        if (gammaValue > gammaMax) {
+            finalGammaValue = gammaMax;
+            std::cout << "[ NOTE ] Selected gamma value exceeds maximum, setting to max allowable: " << finalGammaValue << std::endl;
+        } else if (gammaValue < gammaMin) {
+            finalGammaValue = gammaMin;
+            std::cout << "[ NOTE ] Selected gamma value is below minimum, setting to min allowable: " << finalGammaValue << std::endl;
+        }
+
+        ptrGamma->SetValue(finalGammaValue);
+        std::cout << "Gamma correction set to " << finalGammaValue << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Gamma correction setting not available" << std::endl;
+    }
+}
+
+void SpinCamera::SetGammaCorrection(float user_gamma_value) {
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic gamma is off to allow manual setting
+    CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
+    if (IsReadable(ptrGammaAuto) && IsWritable(ptrGammaAuto)) {
+        CEnumEntryPtr ptrGammaAutoOff = ptrGammaAuto->GetEntryByName("Off");
+        if (IsReadable(ptrGammaAutoOff) && IsWritable(ptrGammaAutoOff)) {
+            ptrGammaAuto->SetIntValue(ptrGammaAutoOff->GetValue());
+            std::cout << "Manual Gamma Enabled (Automatic gamma disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic gamma (enable manual gamma)" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic gamma" << std::endl;
+        return;
+    }
+
+    // Apply user-selected gamma correction
+    CFloatPtr ptrGamma = nodeMap->GetNode("Gamma");
+    if (IsAvailable(ptrGamma) && IsWritable(ptrGamma)) {
+        const float gammaMax = static_cast<float>(ptrGamma->GetMax());
+        const float gammaMin = static_cast<float>(ptrGamma->GetMin());
+        float finalGammaValue = user_gamma_value;
+
+        if (user_gamma_value > gammaMax) {
+            finalGammaValue = gammaMax;
+            std::cout << "[ NOTE ] Selected gamma value exceeds maximum, setting to max allowable: " << finalGammaValue << std::endl;
+        } else if (user_gamma_value < gammaMin) {
+            finalGammaValue = gammaMin;
+            std::cout << "[ NOTE ] Selected gamma value is below minimum, setting to min allowable: " << finalGammaValue << std::endl;
+        }
+
+        ptrGamma->SetValue(finalGammaValue);
+        std::cout << "Gamma correction set to " << finalGammaValue << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Gamma correction setting not available" << std::endl;
+    }
 }
 
 void SpinCamera::SetBlackLevel() {

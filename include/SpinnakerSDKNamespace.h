@@ -99,6 +99,7 @@ namespace SpinOption {
     // General conversion: A 6 dB increase in Gain approximately doubles the ISO sensitivity, with a typical starting base ISO of 100
     // NOTE: Custom Gain values can also be set using any float value
     enum class GainSensitivity {
+        Auto,         // Gain auto mode
         Preset_0dB,   // Approx. ISO 100
         Preset_3dB,   // Intermediate value between ISO 100 and ISO 200
         Preset_6dB,   // Approx. ISO 200
@@ -124,6 +125,26 @@ namespace SpinOption {
         ISO_3200,    // Approx. 30dB
         ISO_6400,    // Approx. 36dB
         ISO_12800    // Approx. 42dB
+    };
+
+    // Available standard preset options for GammaCorrection
+    // Gamma correction adjusts the brightness of the image, correcting the non-linear relationship between pixel values and their actual displayed intensity.
+    // This can enhance image quality by making details in shadows and highlights more visible.
+    enum class GammaCorrection {
+        Auto,          // Gamma auto mode
+        Preset_0_00,   // Gamma 0.00 (Values < 1 darken the image, making shadows more pronounced)
+        Preset_0_25,   // Gamma 0.25 (Values < 1 darken the image, making shadows more pronounced)
+        Preset_0_50,   // Gamma 0.50 (Values < 1 darken the image, making shadows more pronounced)
+        Preset_0_75,   // Gamma 0.75 (Values < 1 darken the image, making shadows more pronounced)
+        Preset_1_00,   // Gamma 1.00 (neutral, no correction)
+        Preset_1_25,   // Gamma 1.25 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_1_50,   // Gamma 1.50 (Values > 1 brighten the image, making highlights more pronounced) 
+        Preset_1_75,   // Gamma 1.75 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_2_00,   // Gamma 2.00 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_2_25,   // Gamma 2.25 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_2_50,   // Gamma 2.50 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_2_75,   // Gamma 2.75 (Values > 1 brighten the image, making highlights more pronounced)
+        Preset_3_00    // Gamma 3.00 (Values > 1 brighten the image, making highlights more pronounced)
     };
 
 }

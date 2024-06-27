@@ -26,7 +26,8 @@ public:
     void SetImageDimensions(int, int, int, int);           // Custom image positioning
     void SetGainSensitivity(SpinOption::GainSensitivity);
     void SetGainSensitivity(float);
-    void SetGammaCorrection();
+    void SetGammaCorrection(SpinOption::GammaCorrection);
+    void SetGammaCorrection(float);
     void SetBlackLevel();
     void SetRedBalanceRatio();
     void SetBlueBalanceRatio();
