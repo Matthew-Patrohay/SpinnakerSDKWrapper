@@ -16,14 +16,16 @@ public:
     bool StopAcquisition();
     bool CaptureImage(const std::string& imagePath);
     void Shutdown();
-    int SetCameraSettings();
+    void SetDefaultSettings();
     void SetPixelFormat(SpinOption::PixelFormat);
     void SetBinning(SpinOption::Binning);
     void SetDecimation(SpinOption::Decimation);
     void SetExposureTime(SpinOption::ExposureTime);
-    void SetExposureTime(double);
-    void SetImageDimensions();
-    void SetGainSensitivity();
+    void SetExposureTime(double); 
+    void SetImageDimensions(SpinOption::ImageDimensions);  // Standard (centered) options
+    void SetImageDimensions(int, int, int, int);           // Custom image positioning
+    void SetGainSensitivity(SpinOption::GainSensitivity);
+    void SetGainSensitivity(float);
     void SetGammaCorrection();
     void SetBlackLevel();
     void SetRedBalanceRatio();

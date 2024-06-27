@@ -76,6 +76,56 @@ namespace SpinOption {
         Shutter_1_1           // 1 second (1000000 microseconds) - Max framerate: 1 fps
     };
 
+    // Available standard preset options for ImageDimensions (Pixels)
+    // NOTE: You may also set it to any integer/double (custom)
+    enum class ImageDimensions {
+        Preset_1440x1080,  // Width: 1440  -  Height: 1080
+        Preset_1080x1440,  // Width: 1080  -  Height: 1440
+        Preset_1280x960,   // Width: 1280  -  Height: 960
+        Preset_960x1280,   // Width: 960   -  Height: 1280
+        Preset_720x540,    // Width: 720   -  Height: 540
+        Preset_540x720,    // Width: 540   -  Height: 720
+        Preset_640x480,    // Width: 640   -  Height: 480
+        Preset_480x640,    // Width: 480   -  Height: 640
+        Preset_320x240,    // Width: 320   -  Height: 240
+        Preset_240x320     // Width: 240   -  Height: 320
+    };
+
+    // Available standard preset options for GainSensitivity
+    // Gain sensitivity controls the amplification of the image sensor's signal, effectively increasing the sensor's sensitivity to light
+    // This is similar to ISO in photography, which adjusts the sensor's sensitivity, but Gain and ISO measure slightly different aspects
+    // While ISO is a standardized scale used in photography, Gain is measured in decibels (dB) and provides a continuous adjustment more commonly used in video and industrial imaging
+    // Higher Gain values increase image brightness but may also introduce noise, similar to higher ISO settings
+    // General conversion: A 6 dB increase in Gain approximately doubles the ISO sensitivity, with a typical starting base ISO of 100
+    // NOTE: Custom Gain values can also be set using any float value
+    enum class GainSensitivity {
+        Preset_0dB,   // Approx. ISO 100
+        Preset_3dB,   // Intermediate value between ISO 100 and ISO 200
+        Preset_6dB,   // Approx. ISO 200
+        Preset_9dB,   // Intermediate value between ISO 200 and ISO 400
+        Preset_12dB,  // Approx. ISO 400
+        Preset_15dB,  // Intermediate value between ISO 400 and ISO 800
+        Preset_18dB,  // Approx. ISO 800
+        Preset_21dB,  // Intermediate value between ISO 800 and ISO 1600
+        Preset_24dB,  // Approx. ISO 1600
+        Preset_27dB,  // Intermediate value between ISO 1600 and ISO 3200
+        Preset_30dB,  // Approx. ISO 3200
+        Preset_33dB,  // Intermediate value between ISO 3200 and ISO 6400
+        Preset_36dB,  // Approx. ISO 6400
+        Preset_39dB,  // Intermediate value between ISO 6400 and ISO 12800
+        Preset_42dB,  // Approx. ISO 12800
+
+        // Not as accurate presets, but maybe more commonly used phrasing
+        ISO_100,     // Approx. 0dB
+        ISO_200,     // Approx. 6dB
+        ISO_400,     // Approx. 12dB
+        ISO_800,     // Approx. 18dB
+        ISO_1600,    // Approx. 24dB
+        ISO_3200,    // Approx. 30dB
+        ISO_6400,    // Approx. 36dB
+        ISO_12800    // Approx. 42dB
+    };
+
 }
 
 #endif // SPINNAKER_SDK_NAMESPACE_H

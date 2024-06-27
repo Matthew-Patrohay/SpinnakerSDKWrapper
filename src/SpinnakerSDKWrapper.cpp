@@ -67,24 +67,18 @@ void SpinCamera::Shutdown() {
     }
 }
 
-int SpinCamera::SetCameraSettings() {
-    if (!nodeMap) return -1;
-
-    SetPixelFormat(SpinOption::PixelFormat::BayerRG8);   // Default format for testing
-    SetBinning(SpinOption::Binning::NoBinning);          // Default to no binning
-    SetDecimation(SpinOption::Decimation::NoDecimation); // Default to no decimation
+void SpinCamera::SetDefaultSettings() {
+    SetPixelFormat(SpinOption::PixelFormat::BayerRG8);
+    SetBinning(SpinOption::Binning::NoBinning);
+    SetDecimation(SpinOption::Decimation::NoDecimation);
     SetExposureTime(SpinOption::ExposureTime::Shutter_1_1000);
-    SetImageDimensions();
-    SetGainSensitivity();
+    SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
+    SetGainSensitivity(SpinOption::GainSensitivity::Preset_18dB);
     SetGammaCorrection();
     SetBlackLevel();
     SetRedBalanceRatio();
     SetBlueBalanceRatio();
-
-    std::cout << std::endl;
-    return 0;
 }
-
 
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
 
@@ -359,12 +353,318 @@ void SpinCamera::SetExposureTime(double user_exposure_time) {
     }
 }
 
-void SpinCamera::SetImageDimensions() {
-    // Your implementation for setting image dimensions
+void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
+    // All legal options
+    const std::unordered_map<SpinOption::ImageDimensions, std::pair<int, int>> ImageDimensions_legal = {
+        {SpinOption::ImageDimensions::Preset_1440x1080, {1440, 1080}},
+        {SpinOption::ImageDimensions::Preset_1080x1440, {1080, 1440}},
+        {SpinOption::ImageDimensions::Preset_1280x960,  {1280, 960}},
+        {SpinOption::ImageDimensions::Preset_960x1280,  {960, 1280}},
+        {SpinOption::ImageDimensions::Preset_720x540,   {720, 540}},
+        {SpinOption::ImageDimensions::Preset_540x720,   {540, 720}},
+        {SpinOption::ImageDimensions::Preset_640x480,   {640, 480}},
+        {SpinOption::ImageDimensions::Preset_480x640,   {480, 640}},
+        {SpinOption::ImageDimensions::Preset_320x240,   {320, 240}},
+        {SpinOption::ImageDimensions::Preset_240x320,   {240, 320}}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Get the selected image dimensions from the map
+    auto option = ImageDimensions_legal.find(user_option);
+    if (option == ImageDimensions_legal.end()) {
+        std::cout << "[ WARNING ] Invalid image dimensions option." << std::endl;
+        return;
+    }
+    const std::pair<int, int>& dimensions = option->second;
+
+    // Get width and height
+    const int& width = dimensions.first;
+    const int& height = dimensions.second;
+    int finalWidth = width;
+    int finalHeight = height;
+
+    // Apply user-selected width
+    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
+        const int widthMax = static_cast<int>(ptrWidth->GetMax());
+        const int widthMin = static_cast<int>(ptrWidth->GetMin());
+
+        if (width > widthMax) {
+            finalWidth = widthMax;
+            std::cout << "[ NOTE ] Selected width exceeds maximum, setting to max allowable: " << finalWidth << "." << std::endl;
+        } else if (width < widthMin) {
+            finalWidth = widthMin;
+            std::cout << "[ NOTE ] Selected width is below minimum, setting to min allowable: " << finalWidth << "." << std::endl;
+        }
+
+        ptrWidth->SetValue(finalWidth);
+        std::cout << "Width set to " << finalWidth << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Width setting not available." << std::endl;
+    }
+
+    // Apply user-selected height
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
+        const int heightMax = static_cast<int>(ptrHeight->GetMax());
+        const int heightMin = static_cast<int>(ptrHeight->GetMin());
+
+        if (height > heightMax) {
+            finalHeight = heightMax;
+            std::cout << "[ NOTE ] Selected height exceeds maximum, setting to max allowable: " << finalHeight << "." << std::endl;
+        } else if (height < heightMin) {
+            finalHeight = heightMin;
+            std::cout << "[ NOTE ] Selected height is below minimum, setting to min allowable: " << finalHeight << "." << std::endl;
+        }
+
+        ptrHeight->SetValue(finalHeight);
+        std::cout << "Height set to " << finalHeight << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Height setting not available." << std::endl;
+    }
+
+    // Calculate and set width offset
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
+        int maxWidth = static_cast<int>(ptrWidth->GetMax());
+        int offsetX = (maxWidth - finalWidth) / 2;
+
+        ptrWidthOffset->SetValue(offsetX);
+        std::cout << "Width offset set to " << offsetX << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Width offset setting not available." << std::endl;
+    }
+
+    // Calculate and set height offset
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
+        int maxHeight = static_cast<int>(ptrHeight->GetMax());
+        int offsetY = (maxHeight - finalHeight) / 2;
+
+        ptrHeightOffset->SetValue(offsetY);
+        std::cout << "Height offset set to " << offsetY << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Height offset setting not available." << std::endl;
+    }
 }
 
-void SpinCamera::SetGainSensitivity() {
-    // Your implementation for setting gain sensitivity
+void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_width_offset, int user_height_offset) {
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Get width and height
+    const int& width = user_width;
+    const int& height = user_height;
+    int finalWidth = width;
+    int finalHeight = height;
+
+    // Apply user-selected width
+    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
+        const int widthMax = static_cast<int>(ptrWidth->GetMax());
+        const int widthMin = static_cast<int>(ptrWidth->GetMin());
+
+        if (width > widthMax) {
+            finalWidth = widthMax;
+            std::cout << "[ NOTE ] Selected width exceeds maximum, setting to max allowable: " << finalWidth << "." << std::endl;
+        } else if (width < widthMin) {
+            finalWidth = widthMin;
+            std::cout << "[ NOTE ] Selected width is below minimum, setting to min allowable: " << finalWidth << "." << std::endl;
+        }
+
+        ptrWidth->SetValue(finalWidth);
+        std::cout << "Width set to " << finalWidth << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Width setting not available." << std::endl;
+    }
+
+    // Apply user-selected height
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
+        const int heightMax = static_cast<int>(ptrHeight->GetMax());
+        const int heightMin = static_cast<int>(ptrHeight->GetMin());
+
+        if (height > heightMax) {
+            finalHeight = heightMax;
+            std::cout << "[ NOTE ] Selected height exceeds maximum, setting to max allowable: " << finalHeight << "." << std::endl;
+        } else if (height < heightMin) {
+            finalHeight = heightMin;
+            std::cout << "[ NOTE ] Selected height is below minimum, setting to min allowable: " << finalHeight << "." << std::endl;
+        }
+
+        ptrHeight->SetValue(finalHeight);
+        std::cout << "Height set to " << finalHeight << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Height setting not available." << std::endl;
+    }
+
+    // Calculate and set width offset
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
+        const int sensorWidth = static_cast<int>(ptrWidth->GetMax());
+        int maxWidthOffset = (sensorWidth - finalWidth);
+        int minWidthOffset = 0;
+
+        if (user_width_offset > maxWidthOffset) {
+            user_width_offset = maxWidthOffset;
+            std::cout << "[ NOTE ] Selected width offset exceeds maximum, setting to max allowable: " << user_width_offset << "." << std::endl;
+        } else if (user_width_offset < minWidthOffset) {
+            user_width_offset = minWidthOffset;
+            std::cout << "[ NOTE ] Selected width offset is below minimum, setting to min allowable: " << user_width_offset << "." << std::endl;
+        }
+
+        ptrWidthOffset->SetValue(user_width_offset);
+        std::cout << "Width offset set to " << user_width_offset << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Width offset setting not available." << std::endl;
+    }
+
+    // Calculate and set height offset
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
+        const int sensorHeight = static_cast<int>(ptrHeight->GetMax());
+        int maxHeightOffset = (sensorHeight - finalHeight);
+        int minHeightOffset = 0;
+
+        if (user_height_offset > maxHeightOffset) {
+            user_height_offset = maxHeightOffset;
+            std::cout << "[ NOTE ] Selected height offset exceeds maximum, setting to max allowable: " << user_height_offset << "." << std::endl;
+        } else if (user_height_offset < minHeightOffset) {
+            user_height_offset = minHeightOffset;
+            std::cout << "[ NOTE ] Selected height offset is below minimum, setting to min allowable: " << user_height_offset << "." << std::endl;
+        }
+
+        ptrHeightOffset->SetValue(user_height_offset);
+        std::cout << "Height offset set to " << user_height_offset << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Height offset setting not available." << std::endl;
+    }
+}
+
+void SpinCamera::SetGainSensitivity(SpinOption::GainSensitivity user_option) {
+    // All legal options
+    const std::unordered_map<SpinOption::GainSensitivity, float> GainSensitivity_legal = {
+        {SpinOption::GainSensitivity::Preset_0dB, 0.0f},
+        {SpinOption::GainSensitivity::Preset_3dB, 3.0f},
+        {SpinOption::GainSensitivity::Preset_6dB, 6.0f},
+        {SpinOption::GainSensitivity::Preset_9dB, 9.0f},
+        {SpinOption::GainSensitivity::Preset_12dB, 12.0f},
+        {SpinOption::GainSensitivity::Preset_15dB, 15.0f},
+        {SpinOption::GainSensitivity::Preset_18dB, 18.0f},
+        {SpinOption::GainSensitivity::Preset_21dB, 21.0f},
+        {SpinOption::GainSensitivity::Preset_24dB, 24.0f},
+        {SpinOption::GainSensitivity::Preset_27dB, 27.0f},
+        {SpinOption::GainSensitivity::Preset_30dB, 30.0f},
+        {SpinOption::GainSensitivity::Preset_33dB, 33.0f},
+        {SpinOption::GainSensitivity::Preset_36dB, 36.0f},
+        {SpinOption::GainSensitivity::Preset_39dB, 39.0f},
+        {SpinOption::GainSensitivity::Preset_42dB, 42.0f},
+        {SpinOption::GainSensitivity::ISO_100, 0.0f},
+        {SpinOption::GainSensitivity::ISO_200, 6.0f},
+        {SpinOption::GainSensitivity::ISO_400, 12.0f},
+        {SpinOption::GainSensitivity::ISO_800, 18.0f},
+        {SpinOption::GainSensitivity::ISO_1600, 24.0f},
+        {SpinOption::GainSensitivity::ISO_3200, 30.0f},
+        {SpinOption::GainSensitivity::ISO_6400, 36.0f},
+        {SpinOption::GainSensitivity::ISO_12800, 42.0f}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Get the selected gain sensitivity value from the map
+    auto option = GainSensitivity_legal.find(user_option);
+    if (option == GainSensitivity_legal.end()) {
+        std::cout << "[ WARNING ] Invalid gain sensitivity option." << std::endl;
+        return;
+    }
+    const float& gainSensitivity = option->second;
+
+    // Ensure automatic gain is off to allow manual setting
+    CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
+    if (IsReadable(ptrGainAuto) && IsWritable(ptrGainAuto)) {
+        CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
+        if (IsReadable(ptrGainAutoOff)) {
+            ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
+            std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic gain" << std::endl;
+    }
+
+    // Apply user-selected gain sensitivity
+    CFloatPtr ptrGain = nodeMap->GetNode("Gain");
+    if (IsAvailable(ptrGain) && IsWritable(ptrGain)) {
+        const float gainMax = static_cast<float>(ptrGain->GetMax());
+        const float gainMin = static_cast<float>(ptrGain->GetMin());
+        float finalGainSensitivity = gainSensitivity;
+
+        if (gainSensitivity > gainMax) {
+            finalGainSensitivity = gainMax;
+            std::cout << "[ NOTE ] Selected gain sensitivity exceeds maximum, setting to max allowable: " << finalGainSensitivity << std::endl;
+        } else if (gainSensitivity < gainMin) {
+            finalGainSensitivity = gainMin;
+            std::cout << "[ NOTE ] Selected gain sensitivity is below minimum, setting to min allowable: " << finalGainSensitivity << std::endl;
+        }
+
+        ptrGain->SetValue(finalGainSensitivity);
+        std::cout << "Gain sensitivity set to " << finalGainSensitivity << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Gain sensitivity setting not available" << std::endl;
+    }
+}
+
+void SpinCamera::SetGainSensitivity(float user_gain_sensitivity) {
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic gain is off to allow manual setting
+    CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
+    if (IsReadable(ptrGainAuto) && IsWritable(ptrGainAuto)) {
+        CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
+        if (IsReadable(ptrGainAutoOff)) {
+            ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
+            std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic gain" << std::endl;
+        return;
+    }
+
+    // Apply user-selected gain sensitivity
+    CFloatPtr ptrGain = nodeMap->GetNode("Gain");
+    if (IsAvailable(ptrGain) && IsWritable(ptrGain)) {
+        const float gainMax = static_cast<float>(ptrGain->GetMax());
+        const float gainMin = static_cast<float>(ptrGain->GetMin());
+        float finalGainSensitivity = user_gain_sensitivity;
+
+        if (user_gain_sensitivity > gainMax) {
+            finalGainSensitivity = gainMax;
+            std::cout << "[ NOTE ] Selected gain sensitivity exceeds maximum, setting to max allowable: " << finalGainSensitivity << std::endl;
+        } else if (user_gain_sensitivity < gainMin) {
+            finalGainSensitivity = gainMin;
+            std::cout << "[ NOTE ] Selected gain sensitivity is below minimum, setting to min allowable: " << finalGainSensitivity << std::endl;
+        }
+
+        ptrGain->SetValue(finalGainSensitivity);
+        std::cout << "Gain sensitivity set to " << finalGainSensitivity << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Gain sensitivity setting not available" << std::endl;
+    }
 }
 
 void SpinCamera::SetGammaCorrection() {
