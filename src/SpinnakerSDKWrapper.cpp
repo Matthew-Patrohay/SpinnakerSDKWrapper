@@ -692,6 +692,7 @@ void SpinCamera::SetGainSensitivity(float user_gain_sensitivity) {
 void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
     // All legal options for GammaCorrection
     const std::unordered_map<SpinOption::GammaCorrection, float> GammaCorrection_legal = {
+        {SpinOption::GammaCorrection::Disable, 0.0f},
         {SpinOption::GammaCorrection::Auto, 0.0f},
         {SpinOption::GammaCorrection::Preset_0_00, 0.00f},
         {SpinOption::GammaCorrection::Preset_0_25, 0.25f},
@@ -721,6 +722,21 @@ void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
         return;
     }
     const float& gammaValue = option->second;
+
+    // Either enable or disable gamma based on user input
+    CBooleanPtr ptrGammaEnabled = nodeMap.GetNode("GammaEnable");
+    if (IsAvailable(ptrGammaEnabled) && IsWritable(ptrGammaEnabled)) {
+        if (user_option == SpinOption::GammaCorrection::Disable) {
+            ptrGammaEnabled->SetValue(false);
+            cout << "Gamma disabled" << endl;
+            return;
+        } else {
+            ptrGammaEnabled->SetValue(true);
+            cout << "Gamma enabled" << endl;
+        }
+    } else {
+        cout << "[ WARNING ] Unable to enable/disable gamma correction" << endl;
+    }
 
     // Set gamma mode to auto or manual based on user option
     CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
@@ -779,6 +795,16 @@ void SpinCamera::SetGammaCorrection(float user_gamma_value) {
         return;
     }
 
+    // Enable gamma
+    CBooleanPtr ptrGammaEnabled = nodeMap.GetNode("GammaEnable");
+    if (IsAvailable(ptrGammaEnabled) && IsWritable(ptrGammaEnabled)) {
+        ptrGammaEnabled->SetValue(true);
+        cout << "Gamma enabled" << endl;
+    } else {
+        cout << "[ WARNING ] Unable to enable gamma correction" << endl;
+        return;
+    }
+    
     // Ensure automatic gamma is off to allow manual setting
     CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
     if (IsReadable(ptrGammaAuto) && IsWritable(ptrGammaAuto)) {
