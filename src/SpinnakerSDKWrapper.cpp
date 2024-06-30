@@ -1050,6 +1050,55 @@ void SpinCamera::SetRedBalanceRatio(SpinOption::RedBalanceRatio user_option) {
     }
 }
 
+void SpinCamera::SetRedBalanceRatio(float user_option) {
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic white balance is off to allow manual setting
+    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
+        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
+        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
+            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+        return;
+    }
+
+    // Set balance ratio selector to red
+    CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+    if (IsWritable(ptrBalanceRatioSelector)) {
+        CEnumEntryPtr ptrRed = ptrBalanceRatioSelector->GetEntryByName("Red");
+        if (IsReadable(ptrRed)) {
+            ptrBalanceRatioSelector->SetIntValue(ptrRed->GetValue());
+        } else {
+            std::cout << "[ WARNING ] Unable to find or access BalanceRatioSelector Red" << std::endl;
+            return;
+        }
+
+        // Get the selected red balance ratio
+        const float& redBalanceValue = user_option;
+
+        // Apply user-selected red balance ratio
+        CFloatPtr ptrRedBalance = nodeMap->GetNode("BalanceRatio");
+        if (IsAvailable(ptrRedBalance) && IsWritable(ptrRedBalance)) {
+            ptrRedBalance->SetValue(redBalanceValue);
+            std::cout << "Red balance ratio set to " << redBalanceValue << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Red balance ratio setting not available" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] BalanceRatioSelector not available" << std::endl;
+    }
+}
 
 void SpinCamera::SetBlueBalanceRatio(SpinOption::BlueBalanceRatio user_option) {
     // All legal options for BlueBalanceRatio
@@ -1110,6 +1159,57 @@ void SpinCamera::SetBlueBalanceRatio(SpinOption::BlueBalanceRatio user_option) {
             return;
         }
         const float& blueBalanceValue = option->second;
+
+        // Apply user-selected blue balance ratio
+        CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
+        if (IsAvailable(ptrBlueBalance) && IsWritable(ptrBlueBalance)) {
+            ptrBlueBalance->SetValue(blueBalanceValue);
+            std::cout << "Blue balance ratio set to " << blueBalanceValue << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Blue balance ratio setting not available" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] BalanceRatioSelector not available" << std::endl;
+    }
+}
+
+void SpinCamera::SetBlueBalanceRatio(float user_option) {
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic white balance is off to allow manual setting
+    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
+        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
+        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
+            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+        return;
+    }
+
+    // Set balance ratio selector to blue
+    CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+    if (IsWritable(ptrBalanceRatioSelector)) {
+        CEnumEntryPtr ptrBlue = ptrBalanceRatioSelector->GetEntryByName("Blue");
+        if (IsReadable(ptrBlue)) {
+            ptrBalanceRatioSelector->SetIntValue(ptrBlue->GetValue());
+        } else {
+            std::cout << "[ WARNING ] Unable to find or access BalanceRatioSelector Blue" << std::endl;
+            return;
+        }
+
+        // Get the selected blue balance ratio value from the map
+        const float& blueBalanceValue = user_option;
 
         // Apply user-selected blue balance ratio
         CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
