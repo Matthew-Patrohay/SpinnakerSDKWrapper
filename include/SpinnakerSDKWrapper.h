@@ -28,9 +28,12 @@ public:
     void SetGainSensitivity(float);
     void SetGammaCorrection(SpinOption::GammaCorrection);
     void SetGammaCorrection(float);
-    void SetBlackLevel();
-    void SetRedBalanceRatio();
-    void SetBlueBalanceRatio();
+    void SetBlackLevel(SpinOption::BlackLevel);
+    void SetBlackLevel(float);
+    void SetRedBalanceRatio(SpinOption::RedBalanceRatio);
+    void SetRedBalanceRatio(float);
+    void SetBlueBalanceRatio(SpinOption::BlueBalanceRatio);
+    void SetBlueBalanceRatio(float);
 
 private:
     // Primary Spinnaker-relevant variables

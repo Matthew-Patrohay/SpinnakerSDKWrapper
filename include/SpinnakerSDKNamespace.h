@@ -148,6 +148,61 @@ namespace SpinOption {
         Preset_3_00    // Gamma 3.00 (Values > 1 brighten the image, making highlights more pronounced)
     };
 
+
+    // Available standard preset options for BlackLevel
+    // Black level adjusts the baseline brightness of the image, affecting the darkest parts of the image.
+    // This can enhance image quality by making details in dark areas more visible.
+    enum class BlackLevel {
+        Auto,          // Black level auto mode
+        Preset_0_00,   // Black level 0.00 (No adjustment)
+        Preset_0_25,   // Black level 0.25
+        Preset_0_50,   // Black level 0.50
+        Preset_0_75,   // Black level 0.75
+        Preset_1_00,   // Black level 1.00
+        Preset_1_25,   // Black level 1.25
+        Preset_1_50,   // Black level 1.50
+        Preset_1_75,   // Black level 1.75
+        Preset_2_00,   // Black level 2.00
+    };
+
+    // Available standard preset options for RedBalanceRatio
+    // Red balance adjusts the intensity of the red channel in the image.
+    enum class RedBalanceRatio {
+        Auto,            // Automatic white balance (balances blue and red)
+        Preset_0_00,     // Red Balance 0.00
+        Preset_0_25,     // Red Balance 0.25
+        Preset_0_50,     // Red Balance 0.50
+        Preset_0_75,     // Red Balance 0.75
+        Preset_1_00,     // Red Balance 1.00
+        Preset_1_25,     // Red Balance 1.25
+        Preset_1_50,     // Red Balance 1.50
+        Preset_1_75,     // Red Balance 1.75
+        Preset_2_00,     // Red Balance 2.00
+        Preset_2_25,     // Red Balance 2.25
+        Preset_2_50,     // Red Balance 2.50
+        Preset_2_75,     // Red Balance 2.75
+        Preset_3_00      // Red Balance 3.00
+    };
+
+    // Available standard preset options for BlueBalanceRatio
+    // Blue balance adjusts the intensity of the blue channel in the image.
+    enum class BlueBalanceRatio {
+        Auto,            // Automatic white balance (balances blue and red)
+        Preset_0_00,     // Blue Balance 0.00
+        Preset_0_25,     // Blue Balance 0.25
+        Preset_0_50,     // Blue Balance 0.50
+        Preset_0_75,     // Blue Balance 0.75
+        Preset_1_00,     // Blue Balance 1.00
+        Preset_1_25,     // Blue Balance 1.25
+        Preset_1_50,     // Blue Balance 1.50
+        Preset_1_75,     // Blue Balance 1.75
+        Preset_2_00,     // Blue Balance 2.00
+        Preset_2_25,     // Blue Balance 2.25
+        Preset_2_50,     // Blue Balance 2.50
+        Preset_2_75,     // Blue Balance 2.75
+        Preset_3_00      // Blue Balance 3.00
+    };
+
 }
 
 #endif // SPINNAKER_SDK_NAMESPACE_H

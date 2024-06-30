@@ -75,9 +75,9 @@ void SpinCamera::SetDefaultSettings() {
     SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
     SetGainSensitivity(SpinOption::GainSensitivity::Preset_18dB);
     SetGammaCorrection(SpinOption::GammaCorrection::Preset_1_00);
-    SetBlackLevel();
-    SetRedBalanceRatio();
-    SetBlueBalanceRatio();
+    SetBlackLevel(SpinOption::BlackLevel::Preset_0_50);
+    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Preset_1_00);
+    SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Preset_1_00);
 }
 
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
@@ -724,18 +724,18 @@ void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
     const float& gammaValue = option->second;
 
     // Either enable or disable gamma based on user input
-    CBooleanPtr ptrGammaEnabled = nodeMap.GetNode("GammaEnable");
+    CBooleanPtr ptrGammaEnabled = nodeMap->GetNode("GammaEnable");
     if (IsAvailable(ptrGammaEnabled) && IsWritable(ptrGammaEnabled)) {
         if (user_option == SpinOption::GammaCorrection::Disable) {
             ptrGammaEnabled->SetValue(false);
-            cout << "Gamma disabled" << endl;
+            std::cout << "Gamma disabled" << std::endl;
             return;
         } else {
             ptrGammaEnabled->SetValue(true);
-            cout << "Gamma enabled" << endl;
+            std::cout << "Gamma enabled" << std::endl;
         }
     } else {
-        cout << "[ WARNING ] Unable to enable/disable gamma correction" << endl;
+        std::cout << "[ WARNING ] Unable to enable/disable gamma correction" << std::endl;
     }
 
     // Set gamma mode to auto or manual based on user option
@@ -796,12 +796,12 @@ void SpinCamera::SetGammaCorrection(float user_gamma_value) {
     }
 
     // Enable gamma
-    CBooleanPtr ptrGammaEnabled = nodeMap.GetNode("GammaEnable");
+    CBooleanPtr ptrGammaEnabled = nodeMap->GetNode("GammaEnable");
     if (IsAvailable(ptrGammaEnabled) && IsWritable(ptrGammaEnabled)) {
         ptrGammaEnabled->SetValue(true);
-        cout << "Gamma enabled" << endl;
+        std::cout << "Gamma enabled" << std::endl;
     } else {
-        cout << "[ WARNING ] Unable to enable gamma correction" << endl;
+        std::cout << "[ WARNING ] Unable to enable gamma correction" << std::endl;
         return;
     }
     
@@ -843,14 +843,283 @@ void SpinCamera::SetGammaCorrection(float user_gamma_value) {
     }
 }
 
-void SpinCamera::SetBlackLevel() {
-    // Your implementation for setting black level
+void SpinCamera::SetBlackLevel(SpinOption::BlackLevel user_option) {
+    // All legal options for BlackLevel
+    const std::unordered_map<SpinOption::BlackLevel, float> BlackLevel_legal = {
+        {SpinOption::BlackLevel::Auto, 0.0f},
+        {SpinOption::BlackLevel::Preset_0_00, 0.00f},
+        {SpinOption::BlackLevel::Preset_0_25, 0.25f},
+        {SpinOption::BlackLevel::Preset_0_50, 0.50f},
+        {SpinOption::BlackLevel::Preset_0_75, 0.75f},
+        {SpinOption::BlackLevel::Preset_1_00, 1.00f},
+        {SpinOption::BlackLevel::Preset_1_25, 1.25f},
+        {SpinOption::BlackLevel::Preset_1_50, 1.50f},
+        {SpinOption::BlackLevel::Preset_1_75, 1.75f},
+        {SpinOption::BlackLevel::Preset_2_00, 2.00f},
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Get the selected black level value from the map
+    auto option = BlackLevel_legal.find(user_option);
+    if (option == BlackLevel_legal.end()) {
+        std::cout << "[ WARNING ] Invalid black level option." << std::endl;
+        return;
+    }
+    const float& blackLevelValue = option->second;
+
+    // Set black level mode to auto or manual based on user option
+    CEnumerationPtr ptrBlackLevelAuto = nodeMap->GetNode("BlackLevelAuto");
+    if (!IsReadable(ptrBlackLevelAuto) || !IsWritable(ptrBlackLevelAuto)) {
+        std::cout << "[ WARNING ] Unable to set black level mode" << std::endl;
+        return;
+    }
+
+    if (user_option == SpinOption::BlackLevel::Auto) {
+        // Attempt to enable automatic black level
+        CEnumEntryPtr ptrBlackLevelAutoOn = ptrBlackLevelAuto->GetEntryByName("Continuous");
+        if (IsReadable(ptrBlackLevelAutoOn) && IsWritable(ptrBlackLevelAutoOn)) {
+            ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOn->GetValue());
+            std::cout << "Auto Black Level Enabled" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to enable automatic black level" << std::endl;
+        }
+        return;
+    } else {
+        // Attempt to disable automatic black level
+        CEnumEntryPtr ptrBlackLevelAutoOff = ptrBlackLevelAuto->GetEntryByName("Off");
+        if (IsReadable(ptrBlackLevelAutoOff) && IsWritable(ptrBlackLevelAutoOff)) {
+            ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOff->GetValue());
+            std::cout << "Manual Black Level Enabled (Automatic black level disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic black level (enable manual black level)" << std::endl;
+        }
+    }
+
+    // Apply user-selected black level correction
+    CFloatPtr ptrBlackLevel = nodeMap->GetNode("BlackLevel");
+    if (IsAvailable(ptrBlackLevel) && IsWritable(ptrBlackLevel)) {
+        const float blackLevelMax = static_cast<float>(ptrBlackLevel->GetMax());
+        const float blackLevelMin = static_cast<float>(ptrBlackLevel->GetMin());
+        float finalBlackLevelValue = blackLevelValue;
+
+        if (blackLevelValue > blackLevelMax) {
+            finalBlackLevelValue = blackLevelMax;
+            std::cout << "[ NOTE ] Selected black level value exceeds maximum, setting to max allowable: " << finalBlackLevelValue << std::endl;
+        } else if (blackLevelValue < blackLevelMin) {
+            finalBlackLevelValue = blackLevelMin;
+            std::cout << "[ NOTE ] Selected black level value is below minimum, setting to min allowable: " << finalBlackLevelValue << std::endl;
+        }
+
+        ptrBlackLevel->SetValue(finalBlackLevelValue);
+        std::cout << "Black level correction set to " << finalBlackLevelValue << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Black level correction setting not available" << std::endl;
+    }
 }
 
-void SpinCamera::SetRedBalanceRatio() {
-    // Your implementation for setting red balance ratio
+void SpinCamera::SetBlackLevel(float user_black_level_value) {
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Enable black level
+    CBooleanPtr ptrBlackLevelEnabled = nodeMap->GetNode("BlackLevelEnable");
+    if (IsAvailable(ptrBlackLevelEnabled) && IsWritable(ptrBlackLevelEnabled)) {
+        ptrBlackLevelEnabled->SetValue(true);
+        std::cout << "Black level correction enabled" << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Unable to enable black level correction" << std::endl;
+        return;
+    }
+    
+    // Ensure automatic black level is off to allow manual setting
+    CEnumerationPtr ptrBlackLevelAuto = nodeMap->GetNode("BlackLevelAuto");
+    if (IsReadable(ptrBlackLevelAuto) && IsWritable(ptrBlackLevelAuto)) {
+        CEnumEntryPtr ptrBlackLevelAutoOff = ptrBlackLevelAuto->GetEntryByName("Off");
+        if (IsReadable(ptrBlackLevelAutoOff) && IsWritable(ptrBlackLevelAutoOff)) {
+            ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOff->GetValue());
+            std::cout << "Manual Black Level Enabled (Automatic black level disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic black level (enable manual black level)" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic black level" << std::endl;
+        return;
+    }
+
+    // Apply user-selected black level correction
+    CFloatPtr ptrBlackLevel = nodeMap->GetNode("BlackLevel");
+    if (IsAvailable(ptrBlackLevel) && IsWritable(ptrBlackLevel)) {
+        const float blackLevelMax = static_cast<float>(ptrBlackLevel->GetMax());
+        const float blackLevelMin = static_cast<float>(ptrBlackLevel->GetMin());
+        float finalBlackLevelValue = user_black_level_value;
+
+        if (user_black_level_value > blackLevelMax) {
+            finalBlackLevelValue = blackLevelMax;
+            std::cout << "[ NOTE ] Selected black level value exceeds maximum, setting to max allowable: " << finalBlackLevelValue << std::endl;
+        } else if (user_black_level_value < blackLevelMin) {
+            finalBlackLevelValue = blackLevelMin;
+            std::cout << "[ NOTE ] Selected black level value is below minimum, setting to min allowable: " << finalBlackLevelValue << std::endl;
+        }
+
+        ptrBlackLevel->SetValue(finalBlackLevelValue);
+        std::cout << "Black level correction set to " << finalBlackLevelValue << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Black level correction setting not available" << std::endl;
+    }
 }
 
-void SpinCamera::SetBlueBalanceRatio() {
-    // Your implementation for setting blue balance ratio
+void SpinCamera::SetRedBalanceRatio(SpinOption::RedBalanceRatio user_option) {
+    // All legal options for RedBalanceRatio
+    const std::unordered_map<SpinOption::RedBalanceRatio, float> RedBalanceRatio_legal = {
+        {SpinOption::RedBalanceRatio::Auto, 0.0f},
+        {SpinOption::RedBalanceRatio::Preset_0_00, 0.00f},
+        {SpinOption::RedBalanceRatio::Preset_0_25, 0.25f},
+        {SpinOption::RedBalanceRatio::Preset_0_50, 0.50f},
+        {SpinOption::RedBalanceRatio::Preset_0_75, 0.75f},
+        {SpinOption::RedBalanceRatio::Preset_1_00, 1.00f},
+        {SpinOption::RedBalanceRatio::Preset_1_25, 1.25f},
+        {SpinOption::RedBalanceRatio::Preset_1_50, 1.50f},
+        {SpinOption::RedBalanceRatio::Preset_1_75, 1.75f},
+        {SpinOption::RedBalanceRatio::Preset_2_00, 2.00f},
+        {SpinOption::RedBalanceRatio::Preset_2_25, 2.25f},
+        {SpinOption::RedBalanceRatio::Preset_2_50, 2.50f},
+        {SpinOption::RedBalanceRatio::Preset_2_75, 2.75f},
+        {SpinOption::RedBalanceRatio::Preset_3_00, 3.00f}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic white balance is off to allow manual setting
+    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
+        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
+        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
+            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+        return;
+    }
+
+    // Set balance ratio selector to red
+    CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+    if (IsWritable(ptrBalanceRatioSelector)) {
+        CEnumEntryPtr ptrRed = ptrBalanceRatioSelector->GetEntryByName("Red");
+        if (IsReadable(ptrRed)) {
+            ptrBalanceRatioSelector->SetIntValue(ptrRed->GetValue());
+        } else {
+            std::cout << "[ WARNING ] Unable to find or access BalanceRatioSelector Red" << std::endl;
+            return;
+        }
+
+        // Get the selected red balance ratio value from the map
+        auto option = RedBalanceRatio_legal.find(user_option);
+        if (option == RedBalanceRatio_legal.end()) {
+            std::cout << "[ WARNING ] Invalid red balance ratio option." << std::endl;
+            return;
+        }
+        const float& redBalanceValue = option->second;
+
+        // Apply user-selected red balance ratio
+        CFloatPtr ptrRedBalance = nodeMap->GetNode("BalanceRatio");
+        if (IsAvailable(ptrRedBalance) && IsWritable(ptrRedBalance)) {
+            ptrRedBalance->SetValue(redBalanceValue);
+            std::cout << "Red balance ratio set to " << redBalanceValue << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Red balance ratio setting not available" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] BalanceRatioSelector not available" << std::endl;
+    }
+}
+
+
+void SpinCamera::SetBlueBalanceRatio(SpinOption::BlueBalanceRatio user_option) {
+    // All legal options for BlueBalanceRatio
+    const std::unordered_map<SpinOption::BlueBalanceRatio, float> BlueBalanceRatio_legal = {
+        {SpinOption::BlueBalanceRatio::Auto, 0.0f},
+        {SpinOption::BlueBalanceRatio::Preset_0_00, 0.00f},
+        {SpinOption::BlueBalanceRatio::Preset_0_25, 0.25f},
+        {SpinOption::BlueBalanceRatio::Preset_0_50, 0.50f},
+        {SpinOption::BlueBalanceRatio::Preset_0_75, 0.75f},
+        {SpinOption::BlueBalanceRatio::Preset_1_00, 1.00f},
+        {SpinOption::BlueBalanceRatio::Preset_1_25, 1.25f},
+        {SpinOption::BlueBalanceRatio::Preset_1_50, 1.50f},
+        {SpinOption::BlueBalanceRatio::Preset_1_75, 1.75f},
+        {SpinOption::BlueBalanceRatio::Preset_2_00, 2.00f},
+        {SpinOption::BlueBalanceRatio::Preset_2_25, 2.25f},
+        {SpinOption::BlueBalanceRatio::Preset_2_50, 2.50f},
+        {SpinOption::BlueBalanceRatio::Preset_2_75, 2.75f},
+        {SpinOption::BlueBalanceRatio::Preset_3_00, 3.00f}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure automatic white balance is off to allow manual setting
+    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
+        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
+        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
+            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
+        return;
+    }
+
+    // Set balance ratio selector to blue
+    CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+    if (IsWritable(ptrBalanceRatioSelector)) {
+        CEnumEntryPtr ptrBlue = ptrBalanceRatioSelector->GetEntryByName("Blue");
+        if (IsReadable(ptrBlue)) {
+            ptrBalanceRatioSelector->SetIntValue(ptrBlue->GetValue());
+        } else {
+            std::cout << "[ WARNING ] Unable to find or access BalanceRatioSelector Blue" << std::endl;
+            return;
+        }
+
+        // Get the selected blue balance ratio value from the map
+        auto option = BlueBalanceRatio_legal.find(user_option);
+        if (option == BlueBalanceRatio_legal.end()) {
+            std::cout << "[ WARNING ] Invalid blue balance ratio option." << std::endl;
+            return;
+        }
+        const float& blueBalanceValue = option->second;
+
+        // Apply user-selected blue balance ratio
+        CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
+        if (IsAvailable(ptrBlueBalance) && IsWritable(ptrBlueBalance)) {
+            ptrBlueBalance->SetValue(blueBalanceValue);
+            std::cout << "Blue balance ratio set to " << blueBalanceValue << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Blue balance ratio setting not available" << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] BalanceRatioSelector not available" << std::endl;
+    }
 }
