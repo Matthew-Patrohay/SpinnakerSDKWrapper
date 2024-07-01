@@ -11,48 +11,49 @@ SpinCamera::~SpinCamera() {
     Shutdown();
 }
 
-bool SpinCamera::Initialize() {
+void SpinCamera::Initialize(int camera_index) {
+    // Get the instance of the camera
     system = System::GetInstance();
     camList = system->GetCameras();
     if (camList.GetSize() == 0) {
-        std::cout << "No cameras found." << std::endl;
-        return false;
+        throw std::runtime_error("No cameras found.");
     }
-    pCam = camList.GetByIndex(0);
+    pCam = camList.GetByIndex(camera_index);
+
+    // Initialize the camera
+    pCam->Init();
+
+    // Retrieve and set node map
     nodeMap = &pCam->GetNodeMap();
-    return true;
-}
-
-bool SpinCamera::StartAcquisition() {
-    if (!pCam) return false;
-    pCam->BeginAcquisition();
-    return true;
-}
-
-bool SpinCamera::StopAcquisition() {
-    if (!pCam) return false;
-    pCam->EndAcquisition();
-    return true;
-}
-
-bool SpinCamera::CaptureImage(const std::string& imagePath) {
-    if (!pCam) return false;
-
-    try {
-        ImagePtr pResultImage = pCam->GetNextImage();
-        if (pResultImage->IsIncomplete()) {
-            std::cout << "Image incomplete with image status " << pResultImage->GetImageStatus() << std::endl;
-            return false;
-        } else {
-            pResultImage->Save(imagePath.c_str());
-            std::cout << "Image saved at " << imagePath << std::endl;
-            pResultImage->Release();
-        }
-    } catch (Spinnaker::Exception& e) {
-        std::cout << "Error: " << e.what() << std::endl;
-        return false;
+    if (nodeMap == nullptr) {
+        throw std::runtime_error("Failed to get node map.");
     }
-    return true;
+}
+
+void SpinCamera::StartAcquisition() {
+    if (!pCam) throw std::runtime_error("Unable to start camera Acquisition");
+    pCam->BeginAcquisition();
+}
+
+void SpinCamera::StopAcquisition() {
+    if (!pCam) throw std::runtime_error("Unable to end camera Acquisition");
+    pCam->EndAcquisition();
+}
+
+ImagePtr SpinCamera::CaptureRawImage() {
+    // Ensure pCam is created
+    if (!pCam) throw std::runtime_error("Unable capture image");
+
+    // Capture image from buffer
+    ImagePtr pResultImage = pCam->GetNextImage();
+
+    // Ensure image is complete
+    if (pResultImage->IsIncomplete()) {
+        std::cout << "[ WARNING ] Image incomplete with image status " << pResultImage->GetImageStatus() << std::endl;
+    }
+
+    // Return the captured image
+    return pResultImage;
 }
 
 void SpinCamera::Shutdown() {
@@ -71,13 +72,13 @@ void SpinCamera::SetDefaultSettings() {
     SetPixelFormat(SpinOption::PixelFormat::BayerRG8);
     SetBinning(SpinOption::Binning::NoBinning);
     SetDecimation(SpinOption::Decimation::NoDecimation);
-    SetExposureTime(SpinOption::ExposureTime::Shutter_1_1000);
+    SetExposureTime(SpinOption::ExposureTime::Shutter_1_60);
     SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
     SetGainSensitivity(SpinOption::GainSensitivity::Preset_18dB);
     SetGammaCorrection(SpinOption::GammaCorrection::Preset_1_00);
     SetBlackLevel(SpinOption::BlackLevel::Preset_0_50);
-    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Preset_1_00);
-    SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Preset_1_00);
+    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Preset_1_50);
+    SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Preset_2_25);
 }
 
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
@@ -264,30 +265,30 @@ void SpinCamera::SetExposureTime(SpinOption::ExposureTime user_option) {
 
     // Set exposure mode to auto or manual based on user option
     CEnumerationPtr ptrExposureAuto = nodeMap->GetNode("ExposureAuto");
-    if (!IsReadable(ptrExposureAuto) || !IsWritable(ptrExposureAuto)) {
-        std::cout << "[ WARNING ] Unable to set exposure mode" << std::endl;
-        return;
-    }
-
-    if (user_option == SpinOption::ExposureTime::Auto) {
-        // Attempt to enable automatic exposure
-        CEnumEntryPtr ptrExposureAutoOn = ptrExposureAuto->GetEntryByName("Continuous");
-        if (IsReadable(ptrExposureAutoOn) && IsWritable(ptrExposureAutoOn)) {
-            ptrExposureAuto->SetIntValue(ptrExposureAutoOn->GetValue());
-            std::cout << "Auto Exposure Enabled" << std::endl;
+    if (IsReadable(ptrExposureAuto) && IsWritable(ptrExposureAuto)) {
+        if (user_option == SpinOption::ExposureTime::Auto) {
+            // Attempt to enable automatic exposure
+            CEnumEntryPtr ptrExposureAutoOn = ptrExposureAuto->GetEntryByName("Continuous");
+            if (IsReadable(ptrExposureAutoOn)) {
+                ptrExposureAuto->SetIntValue(ptrExposureAutoOn->GetValue());
+                std::cout << "Auto Exposure Enabled" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to enable automatic exposure" << std::endl;
+            }
+            // Return since auto mode was selected
+            return;
         } else {
-            std::cout << "[ WARNING ] Unable to enable automatic exposure" << std::endl;
+            // Attempt to disable automatic exposure
+            CEnumEntryPtr ptrExposureAutoOff = ptrExposureAuto->GetEntryByName("Off");
+            if (IsReadable(ptrExposureAutoOff)) {
+                ptrExposureAuto->SetIntValue(ptrExposureAutoOff->GetValue());
+                std::cout << "Manual Exposure Enabled (Automatic exposure disabled)" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to disable automatic exposure (enable manual exposure)" << std::endl;
+            }
         }
-        return;
     } else {
-        // Attempt to disable automatic exposure
-        CEnumEntryPtr ptrExposureAutoOff = ptrExposureAuto->GetEntryByName("Off");
-        if (IsReadable(ptrExposureAutoOff) && IsWritable(ptrExposureAutoOff)) {
-            ptrExposureAuto->SetIntValue(ptrExposureAutoOff->GetValue());
-            std::cout << "Manual Exposure Enabled (Automatic exposure disabled)" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to disable automatic exposure (enable manual exposure)" << std::endl;
-        }
+        std::cout << "[ WARNING ] Unable to set exposure mode" << std::endl;
     }
 
     // Apply user-selected exposure time
@@ -327,16 +328,18 @@ void SpinCamera::SetExposureTime(double user_exposure_time) {
     // Ensure automatic exposure is off to allow manual setting
     CEnumerationPtr ptrExposureAuto = nodeMap->GetNode("ExposureAuto");
     if (IsReadable(ptrExposureAuto) && IsWritable(ptrExposureAuto)) {
+        // Attempt to disable automatic exposure
         CEnumEntryPtr ptrExposureAutoOff = ptrExposureAuto->GetEntryByName("Off");
         if (IsReadable(ptrExposureAutoOff)) {
             ptrExposureAuto->SetIntValue(ptrExposureAutoOff->GetValue());
             std::cout << "Manual Exposure Enabled (Automatic exposure disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic exposure (enable manual exposure)" << std::endl;
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic exposure" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set exposure mode" << std::endl;
     }
-    
+
     // Apply user-selected exposure time
     CFloatPtr ptrExposureTime = nodeMap->GetNode("ExposureTime");
     if (IsAvailable(ptrExposureTime) && IsWritable(ptrExposureTime)) {
@@ -598,32 +601,31 @@ void SpinCamera::SetGainSensitivity(SpinOption::GainSensitivity user_option) {
 
     // Set gain mode to auto or manual based on user option
     CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
-    if (!IsReadable(ptrGainAuto) || !IsWritable(ptrGainAuto)) {
-        std::cout << "[ WARNING ] Unable to set gain mode" << std::endl;
-        return;
-    }
-
-    if (user_option == SpinOption::GainSensitivity::Auto) {
-        // Attempt to enable automatic gain
-        CEnumEntryPtr ptrGainAutoOn = ptrGainAuto->GetEntryByName("Continuous");
-        if (IsReadable(ptrGainAutoOn) && IsWritable(ptrGainAutoOn)) {
-            ptrGainAuto->SetIntValue(ptrGainAutoOn->GetValue());
-            std::cout << "Auto Gain Enabled" << std::endl;
+    if (IsReadable(ptrGainAuto) && IsWritable(ptrGainAuto)) {
+        if (user_option == SpinOption::GainSensitivity::Auto) {
+            // Attempt to enable automatic gain
+            CEnumEntryPtr ptrGainAutoOn = ptrGainAuto->GetEntryByName("Continuous");
+            if (IsReadable(ptrGainAutoOn)) {
+                ptrGainAuto->SetIntValue(ptrGainAutoOn->GetValue());
+                std::cout << "Auto Gain Enabled" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to enable automatic gain" << std::endl;
+            }
+            // Return since auto mode was selected
+            return;
         } else {
-            std::cout << "[ WARNING ] Unable to enable automatic gain" << std::endl;
+            // Attempt to disable automatic gain
+            CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
+            if (IsReadable(ptrGainAutoOff)) {
+                ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
+                std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to disable automatic gain (enable manual gain)" << std::endl;
+            }
         }
-        return;
     } else {
-        // Attempt to disable automatic gain
-        CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
-        if (IsReadable(ptrGainAutoOff) && IsWritable(ptrGainAutoOff)) {
-            ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
-            std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to disable automatic gain (enable manual gain)" << std::endl;
-        }
+        std::cout << "[ WARNING ] Unable to set gain mode" << std::endl;
     }
-
 
     // Apply user-selected gain sensitivity
     CFloatPtr ptrGain = nodeMap->GetNode("Gain");
@@ -657,14 +659,16 @@ void SpinCamera::SetGainSensitivity(float user_gain_sensitivity) {
     // Ensure automatic gain is off to allow manual setting
     CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
     if (IsReadable(ptrGainAuto) && IsWritable(ptrGainAuto)) {
+        // Attempt to disable automatic gain
         CEnumEntryPtr ptrGainAutoOff = ptrGainAuto->GetEntryByName("Off");
         if (IsReadable(ptrGainAutoOff)) {
             ptrGainAuto->SetIntValue(ptrGainAutoOff->GetValue());
             std::cout << "Manual Gain Enabled (Automatic gain disabled)" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to disable automatic gain (enable manual gain)" << std::endl;
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic gain" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set gain mode" << std::endl;
     }
 
     // Apply user-selected gain sensitivity
@@ -693,7 +697,6 @@ void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
     // All legal options for GammaCorrection
     const std::unordered_map<SpinOption::GammaCorrection, float> GammaCorrection_legal = {
         {SpinOption::GammaCorrection::Disable, 0.0f},
-        {SpinOption::GammaCorrection::Auto, 0.0f},
         {SpinOption::GammaCorrection::Preset_0_00, 0.00f},
         {SpinOption::GammaCorrection::Preset_0_25, 0.25f},
         {SpinOption::GammaCorrection::Preset_0_50, 0.50f},
@@ -738,34 +741,6 @@ void SpinCamera::SetGammaCorrection(SpinOption::GammaCorrection user_option) {
         std::cout << "[ WARNING ] Unable to enable/disable gamma correction" << std::endl;
     }
 
-    // Set gamma mode to auto or manual based on user option
-    CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
-    if (!IsReadable(ptrGammaAuto) || !IsWritable(ptrGammaAuto)) {
-        std::cout << "[ WARNING ] Unable to set gamma mode" << std::endl;
-        return;
-    }
-
-    if (user_option == SpinOption::GammaCorrection::Auto) {
-        // Attempt to enable automatic gamma
-        CEnumEntryPtr ptrGammaAutoOn = ptrGammaAuto->GetEntryByName("Continuous");
-        if (IsReadable(ptrGammaAutoOn) && IsWritable(ptrGammaAutoOn)) {
-            ptrGammaAuto->SetIntValue(ptrGammaAutoOn->GetValue());
-            std::cout << "Auto Gamma Enabled" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to enable automatic gamma" << std::endl;
-        }
-        return;
-    } else {
-        // Attempt to disable automatic gamma
-        CEnumEntryPtr ptrGammaAutoOff = ptrGammaAuto->GetEntryByName("Off");
-        if (IsReadable(ptrGammaAutoOff) && IsWritable(ptrGammaAutoOff)) {
-            ptrGammaAuto->SetIntValue(ptrGammaAutoOff->GetValue());
-            std::cout << "Manual Gamma Enabled (Automatic gamma disabled)" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to disable automatic gamma (enable manual gamma)" << std::endl;
-        }
-    }
-
     // Apply user-selected gamma correction
     CFloatPtr ptrGamma = nodeMap->GetNode("Gamma");
     if (IsAvailable(ptrGamma) && IsWritable(ptrGamma)) {
@@ -802,22 +777,6 @@ void SpinCamera::SetGammaCorrection(float user_gamma_value) {
         std::cout << "Gamma enabled" << std::endl;
     } else {
         std::cout << "[ WARNING ] Unable to enable gamma correction" << std::endl;
-        return;
-    }
-    
-    // Ensure automatic gamma is off to allow manual setting
-    CEnumerationPtr ptrGammaAuto = nodeMap->GetNode("GammaAuto");
-    if (IsReadable(ptrGammaAuto) && IsWritable(ptrGammaAuto)) {
-        CEnumEntryPtr ptrGammaAutoOff = ptrGammaAuto->GetEntryByName("Off");
-        if (IsReadable(ptrGammaAutoOff) && IsWritable(ptrGammaAutoOff)) {
-            ptrGammaAuto->SetIntValue(ptrGammaAutoOff->GetValue());
-            std::cout << "Manual Gamma Enabled (Automatic gamma disabled)" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to disable automatic gamma (enable manual gamma)" << std::endl;
-            return;
-        }
-    } else {
-        std::cout << "[ WARNING ] Unable to disable automatic gamma" << std::endl;
         return;
     }
 
@@ -872,34 +831,6 @@ void SpinCamera::SetBlackLevel(SpinOption::BlackLevel user_option) {
     }
     const float& blackLevelValue = option->second;
 
-    // Set black level mode to auto or manual based on user option
-    CEnumerationPtr ptrBlackLevelAuto = nodeMap->GetNode("BlackLevelAuto");
-    if (!IsReadable(ptrBlackLevelAuto) || !IsWritable(ptrBlackLevelAuto)) {
-        std::cout << "[ WARNING ] Unable to set black level mode" << std::endl;
-        return;
-    }
-
-    if (user_option == SpinOption::BlackLevel::Auto) {
-        // Attempt to enable automatic black level
-        CEnumEntryPtr ptrBlackLevelAutoOn = ptrBlackLevelAuto->GetEntryByName("Continuous");
-        if (IsReadable(ptrBlackLevelAutoOn) && IsWritable(ptrBlackLevelAutoOn)) {
-            ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOn->GetValue());
-            std::cout << "Auto Black Level Enabled" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to enable automatic black level" << std::endl;
-        }
-        return;
-    } else {
-        // Attempt to disable automatic black level
-        CEnumEntryPtr ptrBlackLevelAutoOff = ptrBlackLevelAuto->GetEntryByName("Off");
-        if (IsReadable(ptrBlackLevelAutoOff) && IsWritable(ptrBlackLevelAutoOff)) {
-            ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOff->GetValue());
-            std::cout << "Manual Black Level Enabled (Automatic black level disabled)" << std::endl;
-        } else {
-            std::cout << "[ WARNING ] Unable to disable automatic black level (enable manual black level)" << std::endl;
-        }
-    }
-
     // Apply user-selected black level correction
     CFloatPtr ptrBlackLevel = nodeMap->GetNode("BlackLevel");
     if (IsAvailable(ptrBlackLevel) && IsWritable(ptrBlackLevel)) {
@@ -939,20 +870,19 @@ void SpinCamera::SetBlackLevel(float user_black_level_value) {
         return;
     }
     
-    // Ensure automatic black level is off to allow manual setting
+    // Set black level mode to auto or manual based on user option
     CEnumerationPtr ptrBlackLevelAuto = nodeMap->GetNode("BlackLevelAuto");
     if (IsReadable(ptrBlackLevelAuto) && IsWritable(ptrBlackLevelAuto)) {
+        // Attempt to disable automatic black level
         CEnumEntryPtr ptrBlackLevelAutoOff = ptrBlackLevelAuto->GetEntryByName("Off");
-        if (IsReadable(ptrBlackLevelAutoOff) && IsWritable(ptrBlackLevelAutoOff)) {
+        if (IsReadable(ptrBlackLevelAutoOff)) {
             ptrBlackLevelAuto->SetIntValue(ptrBlackLevelAutoOff->GetValue());
             std::cout << "Manual Black Level Enabled (Automatic black level disabled)" << std::endl;
         } else {
             std::cout << "[ WARNING ] Unable to disable automatic black level (enable manual black level)" << std::endl;
-            return;
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic black level" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set black level mode" << std::endl;
     }
 
     // Apply user-selected black level correction
@@ -1002,20 +932,30 @@ void SpinCamera::SetRedBalanceRatio(SpinOption::RedBalanceRatio user_option) {
         return;
     }
 
-    // Ensure automatic white balance is off to allow manual setting
-    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
-    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
-        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
-        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
-            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
-            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+    // Set white balance mode to auto or manual based on user option
+    CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrBalanceWhiteAuto) && IsWritable(ptrBalanceWhiteAuto)) {
+        if (user_option == SpinOption::RedBalanceRatio::Auto) {
+            // Attempt to enable automatic white balance
+            CEnumEntryPtr ptrBalanceWhiteAutoOn = ptrBalanceWhiteAuto->GetEntryByName("Continuous");
+            if (IsReadable(ptrBalanceWhiteAutoOn)) {
+                ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOn->GetValue());
+                std::cout << "Auto White Balance Enabled" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to enable automatic white balance" << std::endl;
+            }
         } else {
-            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-            return;
+            // Attempt to disable automatic white balance
+            CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
+            if (IsReadable(ptrBalanceWhiteAutoOff)) {
+                ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
+                std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to disable automatic white balance (enable manual white balance)" << std::endl;
+            }
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set white balance mode" << std::endl;
     }
 
     // Set balance ratio selector to red
@@ -1058,19 +998,18 @@ void SpinCamera::SetRedBalanceRatio(float user_option) {
     }
 
     // Ensure automatic white balance is off to allow manual setting
-    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
-    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
-        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
-        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
-            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+    CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrBalanceWhiteAuto) && IsWritable(ptrBalanceWhiteAuto)) {
+        // Attempt to disable automatic white balance
+        CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
+        if (IsReadable(ptrBalanceWhiteAutoOff)) {
+            ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
             std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
         } else {
-            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-            return;
+            std::cout << "[ WARNING ] Unable to disable automatic white balance (enable manual white balance)" << std::endl;
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set white balance mode" << std::endl;
     }
 
     // Set balance ratio selector to red
@@ -1125,20 +1064,30 @@ void SpinCamera::SetBlueBalanceRatio(SpinOption::BlueBalanceRatio user_option) {
         return;
     }
 
-    // Ensure automatic white balance is off to allow manual setting
-    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
-    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
-        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
-        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
-            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
-            std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+    // Set white balance mode to auto or manual based on user option
+    CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrBalanceWhiteAuto) && IsWritable(ptrBalanceWhiteAuto)) {
+        if (user_option == SpinOption::BlueBalanceRatio::Auto) {
+            // Attempt to enable automatic white balance
+            CEnumEntryPtr ptrBalanceWhiteAutoOn = ptrBalanceWhiteAuto->GetEntryByName("Continuous");
+            if (IsReadable(ptrBalanceWhiteAutoOn)) {
+                ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOn->GetValue());
+                std::cout << "Auto White Balance Enabled" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to enable automatic white balance" << std::endl;
+            }
         } else {
-            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-            return;
+            // Attempt to disable automatic white balance
+            CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
+            if (IsReadable(ptrBalanceWhiteAutoOff)) {
+                ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
+                std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
+            } else {
+                std::cout << "[ WARNING ] Unable to disable automatic white balance (enable manual white balance)" << std::endl;
+            }
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set white balance mode" << std::endl;
     }
 
     // Set balance ratio selector to blue
@@ -1182,19 +1131,18 @@ void SpinCamera::SetBlueBalanceRatio(float user_option) {
     }
 
     // Ensure automatic white balance is off to allow manual setting
-    CEnumerationPtr ptrWhiteBalanceAuto = nodeMap->GetNode("BalanceWhiteAuto");
-    if (IsReadable(ptrWhiteBalanceAuto) && IsWritable(ptrWhiteBalanceAuto)) {
-        CEnumEntryPtr ptrWhiteBalanceAutoOff = ptrWhiteBalanceAuto->GetEntryByName("Off");
-        if (IsReadable(ptrWhiteBalanceAutoOff) && IsWritable(ptrWhiteBalanceAutoOff)) {
-            ptrWhiteBalanceAuto->SetIntValue(ptrWhiteBalanceAutoOff->GetValue());
+    CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+    if (IsReadable(ptrBalanceWhiteAuto) && IsWritable(ptrBalanceWhiteAuto)) {
+        // Attempt to disable automatic white balance
+        CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
+        if (IsReadable(ptrBalanceWhiteAutoOff)) {
+            ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
             std::cout << "Manual White Balance Enabled (Automatic white balance disabled)" << std::endl;
         } else {
-            std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-            return;
+            std::cout << "[ WARNING ] Unable to disable automatic white balance (enable manual white balance)" << std::endl;
         }
     } else {
-        std::cout << "[ WARNING ] Unable to disable automatic white balance" << std::endl;
-        return;
+        std::cout << "[ WARNING ] Unable to set white balance mode" << std::endl;
     }
 
     // Set balance ratio selector to blue

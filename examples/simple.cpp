@@ -3,17 +3,19 @@
 #include <iostream>
 
 int main() {
+    // Create a camera object
     SpinCamera camera;
-    if (!camera.Initialize()) {
-        std::cout << "Failed to initialize the camera. Exiting with Failure" << std::endl;
-        return 1; // Return failure
-    }
 
-    camera.SetPixelFormat(SpinOption::PixelFormat::BayerRG8);
+    // Initialize the camera (index 0)
+    camera.Initialize(0);
+
+    // Set all settings to default
+    camera.SetDefaultSettings();
+
+    // Capture an image
     camera.StartAcquisition();
-    camera.CaptureImage("example_image.jpg");
+    Spinnaker::ImagePtr image = camera.CaptureRawImage();
     camera.StopAcquisition();
-    camera.Shutdown();
 
     return 0;
 }

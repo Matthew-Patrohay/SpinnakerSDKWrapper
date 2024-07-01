@@ -8,6 +8,10 @@
 /bin/
 /obj/
 
+# Ignore any images that may have been created
+.jpg
+.png
+
 # Ignore CMake build files
 CMakeFiles/
 CMakeCache.txt

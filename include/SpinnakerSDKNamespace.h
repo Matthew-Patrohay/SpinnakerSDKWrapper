@@ -131,7 +131,6 @@ namespace SpinOption {
     // Gamma correction adjusts the brightness of the image, correcting the non-linear relationship between pixel values and their actual displayed intensity.
     // This can enhance image quality by making details in shadows and highlights more visible; affecting contrast and brightness
     enum class GammaCorrection {
-        Auto,          // Gamma auto mode
         Disable,       // Gamma correction is disabled
         Preset_0_00,   // Gamma 0.00 (Values < 1 darken the image, making shadows more pronounced)
         Preset_0_25,   // Gamma 0.25 (Values < 1 darken the image, making shadows more pronounced)

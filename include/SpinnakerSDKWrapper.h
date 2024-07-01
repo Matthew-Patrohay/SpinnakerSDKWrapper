@@ -11,10 +11,10 @@ public:
     SpinCamera();
     ~SpinCamera();
 
-    bool Initialize();
-    bool StartAcquisition();
-    bool StopAcquisition();
-    bool CaptureImage(const std::string& imagePath);
+    void Initialize(int camera_index);
+    void StartAcquisition();
+    void StopAcquisition();
+    Spinnaker::ImagePtr CaptureRawImage();
     void Shutdown();
     void SetDefaultSettings();
     void SetPixelFormat(SpinOption::PixelFormat);
