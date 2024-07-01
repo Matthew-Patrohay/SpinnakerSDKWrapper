@@ -1,4 +1,4 @@
-#include "../include/SpinnakerSDKWrapper.h"
+#include "../include/SpinnakerSDK_SpinCamera.h"
 #include <iostream>
 #include <unordered_map>
 

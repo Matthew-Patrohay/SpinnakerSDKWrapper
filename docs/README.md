@@ -8,4 +8,4 @@ Welcome to **SpinnakerSDKWrapper**, an open-source C++ wrapper library for the F
 
 If you have the Spinnaker SDK installed, and you are using a Mac (it installs to the Applications folder) then you can compile example programs as follows:
 
-g++ -std=c++14 -I/Applications/Spinnaker/include -o ./bin/simple ./examples/simple.cpp ./src/SpinnakerSDKWrapper.cpp -L/usr/local/lib -lSpinnaker -Wl,-rpath,/Applications/Spinnaker/lib
+g++ -std=c++14 -I/Applications/Spinnaker/include -o ./bin/simple ./examples/simple.cpp ./src/SpinnakerSDK_SpinCamera.cpp ./src/SpinnakerSDK_SpinImage.cpp -L/usr/local/lib -lSpinnaker -Wl,-rpath,/Applications/Spinnaker/lib

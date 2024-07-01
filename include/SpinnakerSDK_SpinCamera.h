@@ -1,10 +1,10 @@
-#ifndef SPINNAKER_SDK_WRAPPER_H
-#define SPINNAKER_SDK_WRAPPER_H
+#ifndef SPINNAKER_SDK_SPINCAMERA_H
+#define SPINNAKER_SDK_SPINCAMERA_H
 
 #include <string>
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
-#include "SpinnakerSDKNamespace.h"
+#include "SpinnakerSDK_SpinOption.h"
 
 class SpinCamera {
 public:
@@ -43,4 +43,4 @@ private:
     Spinnaker::GenApi::INodeMap* nodeMap;
 };
 
-#endif // SPINNAKER_SDK_WRAPPER_H
+#endif // SPINNAKER_SDK_SPINCAMERA_H

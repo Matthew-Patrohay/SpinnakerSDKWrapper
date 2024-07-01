@@ -1,5 +1,5 @@
-#ifndef SPINNAKER_SDK_NAMESPACE_H
-#define SPINNAKER_SDK_NAMESPACE_H
+#ifndef SPINNAKER_SDK_SPINOPTION_H
+#define SPINNAKER_SDK_SPINOPTION_H
 
 #include <unordered_map>
 #include <string>
@@ -204,4 +204,4 @@ namespace SpinOption {
 
 }
 
-#endif // SPINNAKER_SDK_NAMESPACE_H
+#endif // SPINNAKER_SDK_SPINOPTION_H

@@ -9,8 +9,8 @@
 /obj/
 
 # Ignore any images that may have been created
-.jpg
-.png
+*.jpg
+*.png
 
 # Ignore CMake build files
 CMakeFiles/
