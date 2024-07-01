@@ -5,6 +5,7 @@
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDK_SpinOption.h"
+#include "SpinnakerSDK_SpinImage.h"
 
 class SpinCamera {
 public:
@@ -14,7 +15,7 @@ public:
     void Initialize(int camera_index);
     void StartAcquisition();
     void StopAcquisition();
-    Spinnaker::ImagePtr CaptureRawImage();
+    SpinImage CaptureRawImage();
     void Shutdown();
     void SetDefaultSettings();
     void SetPixelFormat(SpinOption::PixelFormat);

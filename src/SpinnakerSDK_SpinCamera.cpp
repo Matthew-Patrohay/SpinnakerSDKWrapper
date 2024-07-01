@@ -1,4 +1,5 @@
 #include "../include/SpinnakerSDK_SpinCamera.h"
+#include "../include/SpinnakerSDK_SpinImage.h"
 #include <iostream>
 #include <unordered_map>
 
@@ -40,20 +41,16 @@ void SpinCamera::StopAcquisition() {
     pCam->EndAcquisition();
 }
 
-ImagePtr SpinCamera::CaptureRawImage() {
-    // Ensure pCam is created
-    if (!pCam) throw std::runtime_error("Unable capture image");
-
-    // Capture image from buffer
-    ImagePtr pResultImage = pCam->GetNextImage();
-
-    // Ensure image is complete
-    if (pResultImage->IsIncomplete()) {
-        std::cout << "[ WARNING ] Image incomplete with image status " << pResultImage->GetImageStatus() << std::endl;
+SpinImage SpinCamera::CaptureRawImage() {
+    if (pCam) {
+        Spinnaker::ImagePtr rawImage = pCam->GetNextImage();
+        if (rawImage->IsIncomplete()) {
+            std::cerr << "Image incomplete with image status " << rawImage->GetImageStatus() << std::endl;
+        } else {
+            return SpinImage(rawImage);
+        }
     }
-
-    // Return the captured image
-    return pResultImage;
+    return SpinImage(nullptr);
 }
 
 void SpinCamera::Shutdown() {

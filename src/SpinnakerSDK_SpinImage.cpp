@@ -18,10 +18,12 @@ SpinImage::~SpinImage() {
 }
 
 void SpinImage::Demosaic() {
-    if (rawImage) {
-        Spinnaker::ImagePtr imageCopy = Spinnaker::Image::Create(imageWidth, imageHeight, 0, 0, rawImage->GetPixelFormat(), imageData.data());
-        demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_BGR8);
+    if (!rawImage || imageData.empty()) {
+        std::cerr << "Raw image is invalid or empty." << std::endl;
+        return;
     }
+    Spinnaker::ImagePtr imageCopy = Spinnaker::Image::Create(imageWidth, imageHeight, 0, 0, rawImage->GetPixelFormat(), imageData.data());
+    demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_BGR8);
 }
 
 void SpinImage::SaveToFile(const std::string& filename, Spinnaker::ImageFileFormat format) {

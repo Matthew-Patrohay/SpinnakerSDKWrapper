@@ -15,7 +15,7 @@ int main() {
 
     // Capture an image
     camera.StartAcquisition();
-    SpinImage image(camera.CaptureRawImage());
+    SpinImage image = camera.CaptureRawImage();
     camera.StopAcquisition();
 
     // Demosaic the image

@@ -2,6 +2,7 @@
 #define SPINNAKER_SDK_SPINIMAGE_H
 
 #include <string>
+#include <vector>
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDK_SpinOption.h"
@@ -23,7 +24,7 @@ private:
     Spinnaker::ImageProcessor imageProcessor;
     int imageWidth;
     int imageHeight;
-    std::vector<unsigned char> imageData;
+    std::vector<unsigned char> imageData; // Local copy of image data
 };
 
 #endif // SPINNAKER_SDK_SPINIMAGE_H
