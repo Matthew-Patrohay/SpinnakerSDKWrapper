@@ -10,7 +10,7 @@ int main() {
     // Initialize the camera (index 0)
     camera.Initialize(0);
 
-    // Set all settings to default
+    // Set all settings to default values
     camera.SetDefaultSettings();
 
     // Capture an image

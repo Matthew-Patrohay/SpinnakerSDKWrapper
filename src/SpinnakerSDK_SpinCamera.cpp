@@ -78,6 +78,226 @@ void SpinCamera::SetDefaultSettings() {
     SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Preset_2_25);
 }
 
+void SpinCamera::SetAutoSettings() {
+    SetPixelFormat(SpinOption::PixelFormat::BayerRG8);
+    SetBinning(SpinOption::Binning::NoBinning);
+    SetDecimation(SpinOption::Decimation::NoDecimation);
+    SetExposureTime(SpinOption::ExposureTime::Auto);
+    SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
+    SetGainSensitivity(SpinOption::GainSensitivity::Auto);
+    SetGammaCorrection(SpinOption::GammaCorrection::Disable);
+    SetBlackLevel(SpinOption::BlackLevel::Auto);
+    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Auto);
+    SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Auto);
+}
+
+void SpinCamera::readSettings() {
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    std::cout << "===== Printing Settings =====" << std::endl;
+
+    try {
+        // Pixel Format
+        CEnumerationPtr ptrPixelFormat = nodeMap->GetNode("PixelFormat");
+        if (IsReadable(ptrPixelFormat)) {
+            CEnumEntryPtr ptrPixelFormatEntry = ptrPixelFormat->GetCurrentEntry();
+            std::string pixelFormat = std::string(ptrPixelFormatEntry->GetSymbolic().c_str());
+            std::cout << "Pixel Format: " << pixelFormat << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Pixel format not readable." << std::endl;
+        }
+
+        // Binning
+        CIntegerPtr ptrBinningHorizontal = nodeMap->GetNode("BinningHorizontal");
+        CIntegerPtr ptrBinningVertical = nodeMap->GetNode("BinningVertical");
+        if (IsReadable(ptrBinningHorizontal) && IsReadable(ptrBinningVertical)) {
+            int binningHorizontal = ptrBinningHorizontal->GetValue();
+            int binningVertical = ptrBinningVertical->GetValue();
+            std::cout << "Binning (Horizontal x Vertical): " << binningHorizontal << " x " << binningVertical << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Binning values not readable." << std::endl;
+        }
+
+        // Decimation
+        CIntegerPtr ptrDecimationHorizontal = nodeMap->GetNode("DecimationHorizontal");
+        CIntegerPtr ptrDecimationVertical = nodeMap->GetNode("DecimationVertical");
+        if (IsReadable(ptrDecimationHorizontal) && IsReadable(ptrDecimationVertical)) {
+            int decimationHorizontal = ptrDecimationHorizontal->GetValue();
+            int decimationVertical = ptrDecimationVertical->GetValue();
+            std::cout << "Decimation (Horizontal x Vertical): " << decimationHorizontal << " x " << decimationVertical << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Decimation values not readable." << std::endl;
+        }
+
+        // Exposure Time
+        CEnumerationPtr ptrExposureAuto = nodeMap->GetNode("ExposureAuto");
+        if (IsReadable(ptrExposureAuto)) {
+            CEnumEntryPtr ptrExposureAutoEntry = ptrExposureAuto->GetCurrentEntry();
+            std::string exposureAuto = std::string(ptrExposureAutoEntry->GetSymbolic().c_str());
+            std::cout << "Exposure Auto: " << exposureAuto << std::endl;
+        }
+        CFloatPtr ptrExposureTime = nodeMap->GetNode("ExposureTime");
+        if (IsReadable(ptrExposureTime)) {
+            double exposureTime = ptrExposureTime->GetValue();
+            std::cout << "Exposure Time: " << exposureTime << " microseconds" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Exposure time not readable." << std::endl;
+        }
+
+        // Image Dimensions
+        CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+        CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+        if (IsReadable(ptrWidth) && IsReadable(ptrHeight)) {
+            int width = ptrWidth->GetValue();
+            int height = ptrHeight->GetValue();
+            std::cout << "Image Dimensions (Width x Height): " << width << " x " << height << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Image dimensions not readable." << std::endl;
+        }
+
+        // Gain Sensitivity
+        CEnumerationPtr ptrGainAuto = nodeMap->GetNode("GainAuto");
+        if (IsReadable(ptrGainAuto)) {
+            CEnumEntryPtr ptrGainAutoEntry = ptrGainAuto->GetCurrentEntry();
+            std::string gainAuto = std::string(ptrGainAutoEntry->GetSymbolic().c_str());
+            std::cout << "Gain Auto: " << gainAuto << std::endl;
+        }
+        CFloatPtr ptrGain = nodeMap->GetNode("Gain");
+        if (IsReadable(ptrGain)) {
+            float gain = ptrGain->GetValue();
+            std::cout << "Gain Sensitivity: " << gain << " dB" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Gain sensitivity not readable." << std::endl;
+        }
+
+        // Gamma Correction
+        CBooleanPtr ptrGammaEnabled = nodeMap->GetNode("GammaEnable");
+        if (IsReadable(ptrGammaEnabled)) {
+            bool gammaEnabled = ptrGammaEnabled->GetValue();
+            std::cout << "Gamma Enabled: " << (gammaEnabled ? "True" : "False") << std::endl;
+        }
+        CFloatPtr ptrGamma = nodeMap->GetNode("Gamma");
+        if (IsReadable(ptrGamma)) {
+            float gamma = ptrGamma->GetValue();
+            std::cout << "Gamma Correction: " << gamma << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Gamma correction not readable." << std::endl;
+        }
+
+        // Black Level
+        CEnumerationPtr ptrBlackLevelAuto = nodeMap->GetNode("BlackLevelAuto");
+        if (IsReadable(ptrBlackLevelAuto)) {
+            CEnumEntryPtr ptrBlackLevelAutoEntry = ptrBlackLevelAuto->GetCurrentEntry();
+            std::string blackLevelAuto = std::string(ptrBlackLevelAutoEntry->GetSymbolic().c_str());
+            std::cout << "Black Level Auto: " << blackLevelAuto << std::endl;
+        }
+        CFloatPtr ptrBlackLevel = nodeMap->GetNode("BlackLevel");
+        if (IsReadable(ptrBlackLevel)) {
+            float blackLevel = ptrBlackLevel->GetValue();
+            std::cout << "Black Level: " << blackLevel << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Black level not readable." << std::endl;
+        }
+
+        // White Balance Ratios
+        CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+        if (IsReadable(ptrBalanceWhiteAuto)) {
+            CEnumEntryPtr ptrBalanceWhiteAutoEntry = ptrBalanceWhiteAuto->GetCurrentEntry();
+            std::string balanceWhiteAuto = std::string(ptrBalanceWhiteAutoEntry->GetSymbolic().c_str());
+            std::cout << "Balance White Auto: " << balanceWhiteAuto << std::endl;
+        }
+
+        CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+        if (IsWritable(ptrBalanceRatioSelector)) {
+            // Red Balance Ratio
+            CEnumEntryPtr ptrRed = ptrBalanceRatioSelector->GetEntryByName("Red");
+            if (IsReadable(ptrRed)) {
+                ptrBalanceRatioSelector->SetIntValue(ptrRed->GetValue());
+                CFloatPtr ptrRedBalance = nodeMap->GetNode("BalanceRatio");
+                if (IsReadable(ptrRedBalance)) {
+                    float redBalance = ptrRedBalance->GetValue();
+                    std::cout << "Red Balance Ratio: " << redBalance << std::endl;
+                }
+            }
+            // Blue Balance Ratio
+            CEnumEntryPtr ptrBlue = ptrBalanceRatioSelector->GetEntryByName("Blue");
+            if (IsReadable(ptrBlue)) {
+                ptrBalanceRatioSelector->SetIntValue(ptrBlue->GetValue());
+                CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
+                if (IsReadable(ptrBlueBalance)) {
+                    float blueBalance = ptrBlueBalance->GetValue();
+                    std::cout << "Blue Balance Ratio: " << blueBalance << std::endl;
+                }
+            }
+        } else {
+            std::cout << "[ WARNING ] White balance ratios not readable." << std::endl;
+        }
+
+        // // White Balance Ratios
+        // CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
+        // std::string originalWhiteBalanceMode;
+        // if (IsReadable(ptrBalanceWhiteAuto)) {
+        //     CEnumEntryPtr ptrBalanceWhiteAutoEntry = ptrBalanceWhiteAuto->GetCurrentEntry();
+        //     originalWhiteBalanceMode = std::string(ptrBalanceWhiteAutoEntry->GetSymbolic().c_str());
+        //     std::cout << "Balance White Auto: " << originalWhiteBalanceMode << std::endl;
+        // }
+
+        // // Switch to Manual if currently in Continuous mode
+        // if (originalWhiteBalanceMode == "Continuous") {
+        //     CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
+        //     if (IsReadable(ptrBalanceWhiteAutoOff)) {
+        //         ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
+        //         std::cout << "Switched White Balance Auto to Manual for reading ratios." << std::endl;
+        //     }
+        // }
+
+        // CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
+        // if (IsWritable(ptrBalanceRatioSelector)) {
+        //     // Red Balance Ratio
+        //     CEnumEntryPtr ptrRed = ptrBalanceRatioSelector->GetEntryByName("Red");
+        //     if (IsReadable(ptrRed)) {
+        //         ptrBalanceRatioSelector->SetIntValue(ptrRed->GetValue());
+        //         CFloatPtr ptrRedBalance = nodeMap->GetNode("BalanceRatio");
+        //         if (IsReadable(ptrRedBalance)) {
+        //             float redBalance = ptrRedBalance->GetValue();
+        //             std::cout << "Red Balance Ratio: " << redBalance << std::endl;
+        //         }
+        //     }
+        //     // Blue Balance Ratio
+        //     CEnumEntryPtr ptrBlue = ptrBalanceRatioSelector->GetEntryByName("Blue");
+        //     if (IsReadable(ptrBlue)) {
+        //         ptrBalanceRatioSelector->SetIntValue(ptrBlue->GetValue());
+        //         CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
+        //         if (IsReadable(ptrBlueBalance)) {
+        //             float blueBalance = ptrBlueBalance->GetValue();
+        //             std::cout << "Blue Balance Ratio: " << blueBalance << std::endl;
+        //         }
+        //     }
+        // } else {
+        //     std::cout << "[ WARNING ] White balance ratios not readable." << std::endl;
+        // }
+
+        // // Switch back to Continuous mode if it was originally set to Continuous
+        // if (originalWhiteBalanceMode == "Continuous") {
+        //     CEnumEntryPtr ptrBalanceWhiteAutoContinuous = ptrBalanceWhiteAuto->GetEntryByName("Continuous");
+        //     if (IsReadable(ptrBalanceWhiteAutoContinuous)) {
+        //         ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoContinuous->GetValue());
+        //         std::cout << "Switched White Balance Auto back to Continuous." << std::endl;
+        //     }
+        // }
+
+
+    } catch (const Spinnaker::Exception& e) {
+        std::cout << "[ ERROR ] Exception caught while reading settings: " << e.what() << std::endl;
+    }
+
+    std::cout << "=============================" << std::endl;
+
+}
+
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
 
     // All legal options
@@ -941,6 +1161,7 @@ void SpinCamera::SetRedBalanceRatio(SpinOption::RedBalanceRatio user_option) {
             } else {
                 std::cout << "[ WARNING ] Unable to enable automatic white balance" << std::endl;
             }
+            return;
         } else {
             // Attempt to disable automatic white balance
             CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
@@ -1073,6 +1294,7 @@ void SpinCamera::SetBlueBalanceRatio(SpinOption::BlueBalanceRatio user_option) {
             } else {
                 std::cout << "[ WARNING ] Unable to enable automatic white balance" << std::endl;
             }
+            return;
         } else {
             // Attempt to disable automatic white balance
             CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
