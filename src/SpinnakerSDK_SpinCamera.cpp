@@ -91,7 +91,7 @@ void SpinCamera::SetAutoSettings() {
     SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Auto);
 }
 
-void SpinCamera::readSettings() {
+void SpinCamera::PrintSettings() {
     if (!nodeMap) {
         std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
         return;

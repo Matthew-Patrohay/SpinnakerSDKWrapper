@@ -19,7 +19,7 @@ public:
     void Shutdown();
     void SetDefaultSettings();
     void SetAutoSettings();
-    void readSettings();
+    void PrintSettings();
     void SetPixelFormat(SpinOption::PixelFormat);
     void SetBinning(SpinOption::Binning);
     void SetDecimation(SpinOption::Decimation);
