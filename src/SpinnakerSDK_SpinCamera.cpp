@@ -236,59 +236,6 @@ void SpinCamera::readSettings() {
             std::cout << "[ WARNING ] White balance ratios not readable." << std::endl;
         }
 
-        // // White Balance Ratios
-        // CEnumerationPtr ptrBalanceWhiteAuto = nodeMap->GetNode("BalanceWhiteAuto");
-        // std::string originalWhiteBalanceMode;
-        // if (IsReadable(ptrBalanceWhiteAuto)) {
-        //     CEnumEntryPtr ptrBalanceWhiteAutoEntry = ptrBalanceWhiteAuto->GetCurrentEntry();
-        //     originalWhiteBalanceMode = std::string(ptrBalanceWhiteAutoEntry->GetSymbolic().c_str());
-        //     std::cout << "Balance White Auto: " << originalWhiteBalanceMode << std::endl;
-        // }
-
-        // // Switch to Manual if currently in Continuous mode
-        // if (originalWhiteBalanceMode == "Continuous") {
-        //     CEnumEntryPtr ptrBalanceWhiteAutoOff = ptrBalanceWhiteAuto->GetEntryByName("Off");
-        //     if (IsReadable(ptrBalanceWhiteAutoOff)) {
-        //         ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoOff->GetValue());
-        //         std::cout << "Switched White Balance Auto to Manual for reading ratios." << std::endl;
-        //     }
-        // }
-
-        // CEnumerationPtr ptrBalanceRatioSelector = nodeMap->GetNode("BalanceRatioSelector");
-        // if (IsWritable(ptrBalanceRatioSelector)) {
-        //     // Red Balance Ratio
-        //     CEnumEntryPtr ptrRed = ptrBalanceRatioSelector->GetEntryByName("Red");
-        //     if (IsReadable(ptrRed)) {
-        //         ptrBalanceRatioSelector->SetIntValue(ptrRed->GetValue());
-        //         CFloatPtr ptrRedBalance = nodeMap->GetNode("BalanceRatio");
-        //         if (IsReadable(ptrRedBalance)) {
-        //             float redBalance = ptrRedBalance->GetValue();
-        //             std::cout << "Red Balance Ratio: " << redBalance << std::endl;
-        //         }
-        //     }
-        //     // Blue Balance Ratio
-        //     CEnumEntryPtr ptrBlue = ptrBalanceRatioSelector->GetEntryByName("Blue");
-        //     if (IsReadable(ptrBlue)) {
-        //         ptrBalanceRatioSelector->SetIntValue(ptrBlue->GetValue());
-        //         CFloatPtr ptrBlueBalance = nodeMap->GetNode("BalanceRatio");
-        //         if (IsReadable(ptrBlueBalance)) {
-        //             float blueBalance = ptrBlueBalance->GetValue();
-        //             std::cout << "Blue Balance Ratio: " << blueBalance << std::endl;
-        //         }
-        //     }
-        // } else {
-        //     std::cout << "[ WARNING ] White balance ratios not readable." << std::endl;
-        // }
-
-        // // Switch back to Continuous mode if it was originally set to Continuous
-        // if (originalWhiteBalanceMode == "Continuous") {
-        //     CEnumEntryPtr ptrBalanceWhiteAutoContinuous = ptrBalanceWhiteAuto->GetEntryByName("Continuous");
-        //     if (IsReadable(ptrBalanceWhiteAutoContinuous)) {
-        //         ptrBalanceWhiteAuto->SetIntValue(ptrBalanceWhiteAutoContinuous->GetValue());
-        //         std::cout << "Switched White Balance Auto back to Continuous." << std::endl;
-        //     }
-        // }
-
 
     } catch (const Spinnaker::Exception& e) {
         std::cout << "[ ERROR ] Exception caught while reading settings: " << e.what() << std::endl;
