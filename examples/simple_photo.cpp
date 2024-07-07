@@ -16,7 +16,7 @@ int main() {
     image.PrintSimpleImageInformation();
 
     // Save the image (specify any path and filetype)
-    image.SaveImage("Simple_image.png");
+    image.SaveImage("Simple_Photo.png");
 
     return 0;
 }
