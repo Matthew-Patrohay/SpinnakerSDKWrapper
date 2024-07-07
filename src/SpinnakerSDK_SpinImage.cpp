@@ -1,4 +1,6 @@
 #include "../include/SpinnakerSDK_SpinImage.h"
+#include <iomanip>
+#include <sstream>
 
 SpinImage::SpinImage(Spinnaker::ImagePtr rawImage) : rawImage(rawImage), demosaicedImage(nullptr) {
     if (rawImage) {
@@ -17,14 +19,33 @@ SpinImage::~SpinImage() {
     // Destructor
 }
 
+// Convert nanoseconds to a more readable format (hh:mm:ss.xxxxxxxxx)
+std::string ConvertTimestampToReadableFormat(uint64_t timestamp) {
+    // Convert timestamp to total seconds
+    double totalSeconds = static_cast<double>(timestamp) / 1e9;
+
+    // Calculate hours, minutes, seconds
+    uint64_t hours = static_cast<uint64_t>(totalSeconds) / 3600;
+    uint64_t minutes = (static_cast<uint64_t>(totalSeconds) % 3600) / 60;
+    double seconds = totalSeconds - (hours * 3600) - (minutes * 60);
+
+    // Create a formatted string
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0') << hours << ":"
+       << std::setw(2) << std::setfill('0') << minutes << ":"
+       << std::fixed << std::setprecision(9) << seconds;
+    return ss.str();
+}
+
 void SpinImage::PrintAllImageInformation() {
     if (!rawImage) {
         std::cerr << "Raw image is invalid." << std::endl;
         return;
     }
+    uint64_t timestamp = rawImage->GetTimeStamp();
 
     std::cout << "\nImage Information:" << std::endl;
-    std::cout << "Timestamp: " << rawImage->GetTimeStamp() << std::endl;
+    std::cout << "Timestamp: " << timestamp << " ns (" << ConvertTimestampToReadableFormat(timestamp) << ")" << std::endl;
     std::cout << "Image ID: " << rawImage->GetID() << std::endl;
     std::cout << "Stream Index: " << rawImage->GetStreamIndex() << std::endl;
     std::cout << "Width: " << rawImage->GetWidth() << std::endl;
@@ -57,8 +78,10 @@ void SpinImage::PrintSimpleImageInformation() {
         return;
     }
 
+    uint64_t timestamp = rawImage->GetTimeStamp();
+
     std::cout << "\nImage Information:" << std::endl;
-    std::cout << "Timestamp: " << rawImage->GetTimeStamp() << std::endl;
+    std::cout << "Timestamp: " << timestamp << "ns (" << ConvertTimestampToReadableFormat(timestamp) << ")" << std::endl;
     std::cout << "Image ID: " << rawImage->GetID() << std::endl;
     std::cout << "Stream Index: " << rawImage->GetStreamIndex() << std::endl;
     std::cout << "Frame ID: " << rawImage->GetFrameID() << std::endl;
