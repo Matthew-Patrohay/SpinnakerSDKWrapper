@@ -17,6 +17,21 @@ namespace SpinOption {
         Mono16       // 16-bit greyscale data
     };
 
+    // Available Acquisition Modes
+    enum class AcquisitionMode {
+        Continuous,  // Continuous acquisition mode
+        SingleFrame, // Single frame acquisition mode
+        MultiFrame   // Multi-frame acquisition mode
+    };
+
+    // Available Buffer Handling Modes
+    enum class BufferHandlingMode {
+        OldestFirst, // Oldest first buffer handling mode
+        OldestFirstOverwrite, // Oldest first overwrite buffer handling mode
+        NewestOnly,  // Newest only buffer handling mode
+        NewestFirst  // Newest first buffer handling mode
+    };
+
     // Available pixel binning formats
     // Pixel binning is the process of combining the charge from adjacent pixels into a single pixel. 
     // This effectively reduces the resolution of the sensor but increases the signal-to-noise ratio 

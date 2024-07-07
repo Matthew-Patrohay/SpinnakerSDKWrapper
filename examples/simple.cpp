@@ -1,7 +1,5 @@
+// Include the Spinnnaker SDK Wrapper header file
 #include "../include/SpinnakerSDK_SpinCamera.h"
-#include "../include/SpinnakerSDK_SpinOption.h"
-#include "../include/SpinnakerSDK_SpinImage.h"
-#include <iostream>
 
 int main() {
     // Create a camera object
@@ -14,18 +12,10 @@ int main() {
     camera.SetDefaultSettings();
 
     // Capture an image
-    camera.StartAcquisition();
     SpinImage image = camera.CaptureRawImage();
-    camera.StopAcquisition();
 
-    // Demosaic the image
-    image.Demosaic();
-
-    // Save the image
-    image.SaveToFile("captured_image2.png", Spinnaker::ImageFileFormat::SPINNAKER_IMAGE_FILE_FORMAT_PNG);
-
-    // Shutdown the camera
-    camera.Shutdown();
+    // Save the image (specify any path and filetype)
+    image.SaveImage("Simple_image.png");
 
     return 0;
 }

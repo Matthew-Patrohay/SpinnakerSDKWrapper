@@ -22,16 +22,51 @@ void SpinImage::Demosaic() {
         std::cerr << "Raw image is invalid or empty." << std::endl;
         return;
     }
+
+    // Determine the pixel format of the image being demosaiced
+    Spinnaker::PixelFormatEnums pixelFormat = static_cast<Spinnaker::PixelFormatEnums>(rawImage->GetPixelFormat());
+
+    // Create a copy of the image to process
     Spinnaker::ImagePtr imageCopy = Spinnaker::Image::Create(imageWidth, imageHeight, 0, 0, rawImage->GetPixelFormat(), imageData.data());
-    demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_BGR8);
+
+    // Approriately process (demoasaic) the image
+    switch (pixelFormat) {
+        case Spinnaker::PixelFormatEnums::PixelFormat_BayerRG8:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_RGB8);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_BayerRG10p:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_RGB10p);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_BayerRG12p:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_RGB12p);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_BayerRG16:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_RGB16);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_Mono8:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_Mono8);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_Mono10p:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_Mono10p);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_Mono12p:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_Mono12p);
+            break;
+        case Spinnaker::PixelFormatEnums::PixelFormat_Mono16:
+            demosaicedImage = imageProcessor.Convert(imageCopy, Spinnaker::PixelFormatEnums::PixelFormat_Mono16);
+            break;
+        default:
+            std::cerr << "Unsupported pixel format for demosaicing." << std::endl;
+            return;
+    }
 }
 
-void SpinImage::SaveToFile(const std::string& filename, Spinnaker::ImageFileFormat format) {
+void SpinImage::SaveImage(const std::string& filename, Spinnaker::ImageFileFormat format) {
     if (demosaicedImage) {
         demosaicedImage->Save(filename.c_str(), format);
-    } else if (rawImage) {
-        Spinnaker::ImagePtr imageCopy = Spinnaker::Image::Create(imageWidth, imageHeight, 0, 0, rawImage->GetPixelFormat(), imageData.data());
-        imageCopy->Save(filename.c_str(), format);
+    } else {
+        Demosaic();
+        SaveImage(filename, format);
     }
 }
 

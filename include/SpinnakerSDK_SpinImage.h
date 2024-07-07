@@ -13,7 +13,7 @@ public:
     ~SpinImage();
 
     void Demosaic();
-    void SaveToFile(const std::string& filename, Spinnaker::ImageFileFormat format = Spinnaker::ImageFileFormat::SPINNAKER_IMAGE_FILE_FORMAT_FROM_FILE_EXT);
+    void SaveImage(const std::string& filename, Spinnaker::ImageFileFormat format = Spinnaker::ImageFileFormat::SPINNAKER_IMAGE_FILE_FORMAT_FROM_FILE_EXT);
     void DrawRedSquare(int x, int y, int squareSize);
     void GetPixelRGB(int x, int y, unsigned char& R, unsigned char& G, unsigned char& B);
     void CalculateAverageColor(int x, int y, int width, int height, unsigned char& R, unsigned char& G, unsigned char& B);

@@ -2,6 +2,7 @@
 #define SPINNAKER_SDK_SPINCAMERA_H
 
 #include <string>
+#include <iostream>
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDK_SpinOption.h"
@@ -20,6 +21,8 @@ public:
     void SetDefaultSettings();
     void SetAutoSettings();
     void PrintSettings();
+    void SetAcquisitionMode(SpinOption::AcquisitionMode);
+    void SetBufferHandlingMode(SpinOption::BufferHandlingMode);
     void SetPixelFormat(SpinOption::PixelFormat);
     void SetBinning(SpinOption::Binning);
     void SetDecimation(SpinOption::Decimation);
@@ -44,6 +47,10 @@ private:
     Spinnaker::SystemPtr system;
     Spinnaker::CameraList camList;
     Spinnaker::GenApi::INodeMap* nodeMap;
+    Spinnaker::GenApi::INodeMap* streamNodeMap;
+
+    // Status for if the camera aquisition is currently active
+    bool acquisitionActive = false;
 };
 
 #endif // SPINNAKER_SDK_SPINCAMERA_H

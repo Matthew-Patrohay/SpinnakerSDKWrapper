@@ -17,7 +17,7 @@ void SpinCamera::Initialize(int camera_index) {
     system = System::GetInstance();
     camList = system->GetCameras();
     if (camList.GetSize() == 0) {
-        throw std::runtime_error("No cameras found.");
+        throw std::runtime_error("[ ERROR ] No cameras found.");
     }
     pCam = camList.GetByIndex(camera_index);
 
@@ -27,33 +27,69 @@ void SpinCamera::Initialize(int camera_index) {
     // Retrieve and set node map
     nodeMap = &pCam->GetNodeMap();
     if (nodeMap == nullptr) {
-        throw std::runtime_error("Failed to get node map.");
+        throw std::runtime_error("[ ERROR ] Failed to get node map.");
+    }
+
+    // Retrieve and set the TLStreamNodeMap
+    streamNodeMap = &pCam->GetTLStreamNodeMap();
+    if (streamNodeMap == nullptr) {
+        throw std::runtime_error("[ ERROR ] Failed to get stream node map.");
     }
 }
 
 void SpinCamera::StartAcquisition() {
-    if (!pCam) throw std::runtime_error("Unable to start camera Acquisition");
+    if (!pCam) throw std::runtime_error("[ ERROR ] Unable to start camera Acquisition");
     pCam->BeginAcquisition();
+    acquisitionActive = true;
 }
 
 void SpinCamera::StopAcquisition() {
-    if (!pCam) throw std::runtime_error("Unable to end camera Acquisition");
+    if (!pCam) throw std::runtime_error("[ ERROR ] Unable to end camera Acquisition");
     pCam->EndAcquisition();
+    acquisitionActive = false;
 }
 
+
 SpinImage SpinCamera::CaptureRawImage() {
+    // Image to return
+    SpinImage capturedImage(nullptr);
+
+    // Start acquisition if not already active
+    bool startedAcquisition = false;
+    if (!acquisitionActive) {
+        // Set acquisition mode to single frame
+        SetAcquisitionMode(SpinOption::AcquisitionMode::SingleFrame);
+        // Set buffer handling mode to NewestOnly
+        SetBufferHandlingMode(SpinOption::BufferHandlingMode::NewestOnly);
+        StartAcquisition();
+        startedAcquisition = true;
+    }
+
+    // Capture image from the camera
     if (pCam) {
         Spinnaker::ImagePtr rawImage = pCam->GetNextImage();
         if (rawImage->IsIncomplete()) {
-            std::cerr << "Image incomplete with image status " << rawImage->GetImageStatus() << std::endl;
+            std::cerr << "[ ERROR ] Image incomplete with image status " << rawImage->GetImageStatus() << std::endl;
         } else {
-            return SpinImage(rawImage);
+            capturedImage = SpinImage(rawImage);
         }
     }
-    return SpinImage(nullptr);
+
+    // Stop acquisition if it was started by this function
+    if (startedAcquisition) {
+        StopAcquisition();
+    }
+
+    // Return the image captured
+    return capturedImage;
 }
 
 void SpinCamera::Shutdown() {
+    // Ensure not aquiring
+    if (acquisitionActive) {
+        StopAcquisition();
+    }
+    
     if (pCam) {
         pCam->DeInit();
         pCam = nullptr;
@@ -243,6 +279,95 @@ void SpinCamera::PrintSettings() {
 
     std::cout << "=============================" << std::endl;
 
+}
+
+void SpinCamera::SetAcquisitionMode(SpinOption::AcquisitionMode mode) {
+
+    // All legal options
+    const std::unordered_map<SpinOption::AcquisitionMode, std::string> AcquisitionMode_legal = {
+        {SpinOption::AcquisitionMode::Continuous, "Continuous"},
+        {SpinOption::AcquisitionMode::SingleFrame, "SingleFrame"},
+        {SpinOption::AcquisitionMode::MultiFrame, "MultiFrame"}
+    };
+
+    // Ensure nodemap exists
+    if (!nodeMap) {
+        std::cout << "[ WARNING ] Node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure Acquisition Mode is available to be written to
+    CEnumerationPtr ptrAcquisitionMode = nodeMap->GetNode("AcquisitionMode");
+    if (!IsAvailable(ptrAcquisitionMode) || !IsWritable(ptrAcquisitionMode)) {
+        std::cout << "[ WARNING ] Unable to set acquisition mode (node retrieval)." << std::endl;
+        return;
+    }
+
+    // Get the mode string from the map
+    auto option = AcquisitionMode_legal.find(mode);
+    if (option == AcquisitionMode_legal.end()) {
+        std::cout << "[ WARNING ] Invalid acquisition mode." << std::endl;
+        return;
+    }
+    const std::string& modeStr = option->second;
+
+    // Apply user selected mode
+    CEnumEntryPtr ptrAcquisitionModeEntry = ptrAcquisitionMode->GetEntryByName(modeStr.c_str());
+    if (!IsReadable(ptrAcquisitionModeEntry)) {
+        std::cout << "[ WARNING ] Unable to set acquisition mode (entry retrieval)." << std::endl;
+    } else {
+        try {
+            ptrAcquisitionMode->SetIntValue(ptrAcquisitionModeEntry->GetValue());
+            std::cout << "Acquisition mode set to " << modeStr << std::endl;
+        } catch (const Spinnaker::Exception& e) {
+            std::cout << "[ ERROR ] Exception caught while setting acquisition mode: " << e.what() << std::endl;
+        }
+    }
+}
+
+void SpinCamera::SetBufferHandlingMode(SpinOption::BufferHandlingMode mode) {
+
+    // All legal options
+    const std::unordered_map<SpinOption::BufferHandlingMode, std::string> BufferHandlingMode_legal = {
+        {SpinOption::BufferHandlingMode::OldestFirst, "OldestFirst"},
+        {SpinOption::BufferHandlingMode::OldestFirstOverwrite, "OldestFirstOverwrite"},
+        {SpinOption::BufferHandlingMode::NewestOnly, "NewestOnly"},
+        {SpinOption::BufferHandlingMode::NewestFirst, "NewestFirst"}
+    };
+
+    // Ensure TLStreamNodeMap exists
+    if (!streamNodeMap) {
+        std::cout << "[ WARNING ] Stream node map is not initialized." << std::endl;
+        return;
+    }
+
+    // Ensure Buffer Handling Mode is available to be written to
+    CEnumerationPtr ptrBufferHandlingMode = streamNodeMap->GetNode("StreamBufferHandlingMode");
+    if (!IsAvailable(ptrBufferHandlingMode) || !IsWritable(ptrBufferHandlingMode)) {
+        std::cout << "[ WARNING ] Unable to set buffer handling mode (node retrieval)." << std::endl;
+        return;
+    }
+
+    // Get the mode string from the map
+    auto option = BufferHandlingMode_legal.find(mode);
+    if (option == BufferHandlingMode_legal.end()) {
+        std::cout << "[ WARNING ] Invalid buffer handling mode." << std::endl;
+        return;
+    }
+    const std::string& modeStr = option->second;
+
+    // Apply user selected mode
+    CEnumEntryPtr ptrBufferHandlingModeEntry = ptrBufferHandlingMode->GetEntryByName(modeStr.c_str());
+    if (!IsReadable(ptrBufferHandlingModeEntry)) {
+        std::cout << "[ WARNING ] Unable to set buffer handling mode (entry retrieval)." << std::endl;
+    } else {
+        try {
+            ptrBufferHandlingMode->SetIntValue(ptrBufferHandlingModeEntry->GetValue());
+            std::cout << "Buffer handling mode set to " << modeStr << std::endl;
+        } catch (const Spinnaker::Exception& e) {
+            std::cout << "[ ERROR ] Exception caught while setting buffer handling mode: " << e.what() << std::endl;
+        }
+    }
 }
 
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {
