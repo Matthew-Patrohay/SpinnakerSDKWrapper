@@ -105,12 +105,12 @@ void SpinCamera::SetDefaultSettings() {
     SetPixelFormat(SpinOption::PixelFormat::BayerRG8);
     SetBinning(SpinOption::Binning::NoBinning);
     SetDecimation(SpinOption::Decimation::NoDecimation);
-    SetExposureTime(SpinOption::ExposureTime::Shutter_1_60);
+    SetExposureTime(SpinOption::ExposureTime::Shutter_1_30);
     SetImageDimensions(SpinOption::ImageDimensions::Preset_1440x1080);
-    SetGainSensitivity(SpinOption::GainSensitivity::Preset_18dB);
-    SetGammaCorrection(SpinOption::GammaCorrection::Preset_1_00);
-    SetBlackLevel(SpinOption::BlackLevel::Preset_0_50);
-    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Preset_1_50);
+    SetGainSensitivity(SpinOption::GainSensitivity::Preset_24dB);
+    SetGammaCorrection(SpinOption::GammaCorrection::Preset_0_75);
+    SetBlackLevel(SpinOption::BlackLevel::Preset_0_25);
+    SetRedBalanceRatio(SpinOption::RedBalanceRatio::Preset_1_25);
     SetBlueBalanceRatio(SpinOption::BlueBalanceRatio::Preset_2_25);
 }
 
