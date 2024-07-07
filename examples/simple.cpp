@@ -13,6 +13,7 @@ int main() {
 
     // Capture an image
     SpinImage image = camera.CaptureRawImage();
+    image.PrintAllImageInformation();
 
     // Save the image (specify any path and filetype)
     image.SaveImage("Simple_image.png");

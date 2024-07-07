@@ -12,6 +12,8 @@ public:
     SpinImage(Spinnaker::ImagePtr rawImage);
     ~SpinImage();
 
+    void PrintAllImageInformation();
+    void PrintSimpleImageInformation();
     void Demosaic();
     void SaveImage(const std::string& filename, Spinnaker::ImageFileFormat format = Spinnaker::ImageFileFormat::SPINNAKER_IMAGE_FILE_FORMAT_FROM_FILE_EXT);
     void DrawRedSquare(int x, int y, int squareSize);

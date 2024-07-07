@@ -17,6 +17,54 @@ SpinImage::~SpinImage() {
     // Destructor
 }
 
+void SpinImage::PrintAllImageInformation() {
+    if (!rawImage) {
+        std::cerr << "Raw image is invalid." << std::endl;
+        return;
+    }
+
+    std::cout << "\nImage Information:" << std::endl;
+    std::cout << "Timestamp: " << rawImage->GetTimeStamp() << std::endl;
+    std::cout << "Image ID: " << rawImage->GetID() << std::endl;
+    std::cout << "Stream Index: " << rawImage->GetStreamIndex() << std::endl;
+    std::cout << "Width: " << rawImage->GetWidth() << std::endl;
+    std::cout << "Height: " << rawImage->GetHeight() << std::endl;
+    std::cout << "Pixel Format: " << rawImage->GetPixelFormatName() << std::endl;
+    std::cout << "Image Size: " << rawImage->GetImageSize() << " bytes" << std::endl;
+    std::cout << "Stride: " << rawImage->GetStride() << " bytes" << std::endl;
+    std::cout << "Frame ID: " << rawImage->GetFrameID() << std::endl;
+    std::cout << "Bits Per Pixel: " << rawImage->GetBitsPerPixel() << std::endl;
+    std::cout << "Number of Channels: " << rawImage->GetNumChannels() << std::endl;
+    std::cout << "X Offset: " << rawImage->GetXOffset() << std::endl;
+    std::cout << "Y Offset: " << rawImage->GetYOffset() << std::endl;
+    std::cout << "X Padding: " << rawImage->GetXPadding() << std::endl;
+    std::cout << "Y Padding: " << rawImage->GetYPadding() << std::endl;
+    std::cout << "Payload Type: " << rawImage->GetPayloadType() << std::endl;
+    std::cout << "Transport Layer Payload Type: " << rawImage->GetTLPayloadType() << std::endl;
+    std::cout << "Transport Layer Pixel Format: " << rawImage->GetTLPixelFormat() << std::endl;
+    std::cout << "Transport Layer Pixel Format Namespace: " << rawImage->GetTLPixelFormatNamespace() << std::endl;
+    std::cout << "Pixel Format Integer Type: " << rawImage->GetPixelFormatIntType() << std::endl;
+    std::cout << "Is Incomplete: " << (rawImage->IsIncomplete() ? "Yes" : "No") << std::endl;
+    std::cout << "Valid Payload Size: " << rawImage->GetValidPayloadSize() << std::endl;
+    std::cout << "Chunk Layout ID: " << rawImage->GetChunkLayoutId() << std::endl;
+    std::cout << "Data Absolute Max: " << rawImage->GetDataAbsoluteMax() << std::endl;
+    std::cout << "Data Absolute Min: " << rawImage->GetDataAbsoluteMin() << std::endl;
+}
+
+void SpinImage::PrintSimpleImageInformation() {
+    if (!rawImage) {
+        std::cerr << "Raw image is invalid." << std::endl;
+        return;
+    }
+
+    std::cout << "\nImage Information:" << std::endl;
+    std::cout << "Timestamp: " << rawImage->GetTimeStamp() << std::endl;
+    std::cout << "Image ID: " << rawImage->GetID() << std::endl;
+    std::cout << "Stream Index: " << rawImage->GetStreamIndex() << std::endl;
+    std::cout << "Frame ID: " << rawImage->GetFrameID() << std::endl;
+}
+
+
 void SpinImage::Demosaic() {
     if (!rawImage || imageData.empty()) {
         std::cerr << "Raw image is invalid or empty." << std::endl;
