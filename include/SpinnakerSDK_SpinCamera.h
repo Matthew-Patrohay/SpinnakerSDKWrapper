@@ -13,14 +13,20 @@ public:
     SpinCamera();
     ~SpinCamera();
 
+    // Camera setup and information
     void Initialize(int camera_index);
-    void StartAcquisition();
-    void StopAcquisition();
-    SpinImage CaptureRawImage();
     void Shutdown();
     void SetDefaultSettings();
     void SetAutoSettings();
     void PrintSettings();
+
+    // Aquisition and Capture
+    void StartAcquisition();
+    void StopAcquisition();
+    SpinImage CaptureSingleFrame();
+    void CaptureContinuousFrames(std::vector<SpinImage>&, int);
+
+    // Setting Camera Settings
     void SetAcquisitionMode(SpinOption::AcquisitionMode);
     void SetBufferHandlingMode(SpinOption::BufferHandlingMode);
     void SetPixelFormat(SpinOption::PixelFormat);
@@ -28,8 +34,8 @@ public:
     void SetDecimation(SpinOption::Decimation);
     void SetExposureTime(SpinOption::ExposureTime);
     void SetExposureTime(double); 
-    void SetImageDimensions(SpinOption::ImageDimensions);  // Standard (centered) options
-    void SetImageDimensions(int, int, int, int);           // Custom image positioning
+    void SetImageDimensions(SpinOption::ImageDimensions);
+    void SetImageDimensions(int, int, int, int);
     void SetGainSensitivity(SpinOption::GainSensitivity);
     void SetGainSensitivity(float);
     void SetGammaCorrection(SpinOption::GammaCorrection);

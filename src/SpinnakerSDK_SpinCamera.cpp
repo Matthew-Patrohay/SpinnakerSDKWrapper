@@ -50,7 +50,7 @@ void SpinCamera::StopAcquisition() {
 }
 
 
-SpinImage SpinCamera::CaptureRawImage() {
+SpinImage SpinCamera::CaptureSingleFrame() {
     // Image to return
     SpinImage capturedImage(nullptr);
 
@@ -82,6 +82,76 @@ SpinImage SpinCamera::CaptureRawImage() {
 
     // Return the image captured
     return capturedImage;
+}
+
+void SpinCamera::CaptureContinuousFrames(std::vector<SpinImage>& frames, int numFrames) {
+    // Ensure frames vector is empty
+    frames.clear();
+
+    // Set the buffer count mode to manual
+    CEnumerationPtr ptrStreamBufferCountMode = streamNodeMap->GetNode("StreamBufferCountMode");
+    if (IsWritable(ptrStreamBufferCountMode)) {
+        CEnumEntryPtr ptrStreamBufferCountModeManual = ptrStreamBufferCountMode->GetEntryByName("Manual");
+        if (IsReadable(ptrStreamBufferCountModeManual)) {
+            ptrStreamBufferCountMode->SetIntValue(ptrStreamBufferCountModeManual->GetValue());
+            std::cout << "Stream Buffer Count Mode set to manual" << std::endl;
+        } else {
+            std::cout << "[ WARNING ] Unable to read buffer count mode manual entry." << std::endl;
+        }
+    } else {
+        std::cout << "[ WARNING ] Unable to set buffer count mode to manual." << std::endl;
+    }
+
+    // Set the buffer count to a reasonable value
+    int64_t bufferCount = 100;
+    CIntegerPtr ptrBufferCount = streamNodeMap->GetNode("StreamBufferCountManual");
+    if (IsWritable(ptrBufferCount)) {
+        ptrBufferCount->SetValue(bufferCount);
+        std::cout << "Buffer count set to: " << bufferCount << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Unable to set buffer count." << std::endl;
+    }
+
+    // Start acquisition if not already active
+    bool startedAcquisition = false;
+    if (!acquisitionActive) {
+        // Set acquisition mode to continuous
+        SetAcquisitionMode(SpinOption::AcquisitionMode::Continuous);
+        // Set buffer handling mode to NewestFirst
+        SetBufferHandlingMode(SpinOption::BufferHandlingMode::OldestFirst);
+        StartAcquisition();
+        startedAcquisition = true;
+    }
+
+    // Capture the specified number of frames
+    for (int i = 1; i <= numFrames; ++i) {
+        if (pCam) {
+            Spinnaker::ImagePtr rawImage = pCam->GetNextImage(1000);
+            if (rawImage->IsIncomplete()) {
+                std::cerr << "[ ERROR ] Image incomplete with image status " << rawImage->GetImageStatus() << std::endl;
+            } else {
+                frames.emplace_back(rawImage);
+                // frames[i].PrintAllImageInformation();
+                std::cout << "Image number " << i << " complete" << std::endl;
+                // Release image
+                rawImage->Release();
+            }
+        }
+    }
+
+    // Retrieve and print the number of lost frames
+    CIntegerPtr ptrLostFrameCount = streamNodeMap->GetNode("StreamLostFrameCount");
+    if (IsReadable(ptrLostFrameCount)) {
+        int64_t lostFrameCount = ptrLostFrameCount->GetValue();
+        std::cout << "Number of lost frames: " << lostFrameCount << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Unable to retrieve lost frame count." << std::endl;
+    }
+
+    // Stop acquisition if it was started by this function
+    if (startedAcquisition) {
+        StopAcquisition();
+    }
 }
 
 void SpinCamera::Shutdown() {
@@ -326,7 +396,6 @@ void SpinCamera::SetAcquisitionMode(SpinOption::AcquisitionMode mode) {
 }
 
 void SpinCamera::SetBufferHandlingMode(SpinOption::BufferHandlingMode mode) {
-
     // All legal options
     const std::unordered_map<SpinOption::BufferHandlingMode, std::string> BufferHandlingMode_legal = {
         {SpinOption::BufferHandlingMode::OldestFirst, "OldestFirst"},
@@ -368,6 +437,7 @@ void SpinCamera::SetBufferHandlingMode(SpinOption::BufferHandlingMode mode) {
             std::cout << "[ ERROR ] Exception caught while setting buffer handling mode: " << e.what() << std::endl;
         }
     }
+
 }
 
 void SpinCamera::SetPixelFormat(SpinOption::PixelFormat format) {

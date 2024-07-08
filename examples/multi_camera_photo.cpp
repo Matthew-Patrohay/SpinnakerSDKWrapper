@@ -15,8 +15,8 @@ int main() {
     camera_2.SetDefaultSettings();
 
     // Capture an image from each camera
-    SpinImage image_1 = camera_1.CaptureRawImage();
-    SpinImage image_2 = camera_2.CaptureRawImage();
+    SpinImage image_1 = camera_1.CaptureSingleFrame();
+    SpinImage image_2 = camera_2.CaptureSingleFrame();
     image_1.PrintSimpleImageInformation();
     image_2.PrintSimpleImageInformation();
 

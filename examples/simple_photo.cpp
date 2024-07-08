@@ -12,7 +12,7 @@ int main() {
     camera.SetDefaultSettings();
 
     // Capture an image
-    SpinImage image = camera.CaptureRawImage();
+    SpinImage image = camera.CaptureSingleFrame();
     image.PrintSimpleImageInformation();
 
     // Save the image (specify any path and filetype)
