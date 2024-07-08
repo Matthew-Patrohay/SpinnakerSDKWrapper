@@ -32,7 +32,6 @@
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
 
 # Ignore Visual Studio files
 *.vcxproj

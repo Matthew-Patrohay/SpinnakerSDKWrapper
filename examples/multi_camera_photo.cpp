@@ -15,6 +15,8 @@ int main() {
     camera_2.SetDefaultSettings();
 
     // Capture an image from each camera
+        // Note: The two image captures don't occur simultaniously
+        // For a parallel-camera example, see multi_camera_video_parallel
     SpinImage image_1 = camera_1.CaptureSingleFrame();
     SpinImage image_2 = camera_2.CaptureSingleFrame();
     image_1.PrintSimpleImageInformation();

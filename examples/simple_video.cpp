@@ -10,7 +10,7 @@ void createVideoFromImages(const std::string&, const std::string&, int);
 namespace fs = std::__fs::filesystem;
 
 int main() {
-    // Create a folder named "video_frames" if it does not exist
+    // Create a folder to store the video frames
     std::string folderName = "video_frames";
     if (!fs::exists(folderName)) {
         fs::create_directory(folderName);
