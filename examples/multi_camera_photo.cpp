@@ -17,10 +17,10 @@ int main() {
     // Capture an image from each camera
         // Note: The two image captures don't occur simultaniously
         // For a parallel-camera example, see multi_camera_video_parallel
-    SpinImage image_1 = camera_1.CaptureSingleFrame();
-    SpinImage image_2 = camera_2.CaptureSingleFrame();
-    image_1.PrintSimpleImageInformation();
-    image_2.PrintSimpleImageInformation();
+    SpinImage image_1(nullptr);
+    SpinImage image_2(nullptr);
+    camera_1.CaptureSingleFrame(image_1);
+    camera_2.CaptureSingleFrame(image_2);
 
     // Save the images (specify any path and filetype)
     image_1.SaveImage("Camera_1_Photo.png");

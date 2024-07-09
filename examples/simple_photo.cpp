@@ -12,8 +12,8 @@ int main() {
     camera.SetDefaultSettings();
 
     // Capture an image
-    SpinImage image = camera.CaptureSingleFrame();
-    image.PrintSimpleImageInformation();
+    SpinImage image(nullptr);
+    camera.CaptureSingleFrame(image);
 
     // Save the image (specify any path and filetype)
     image.SaveImage("Simple_Photo.png");

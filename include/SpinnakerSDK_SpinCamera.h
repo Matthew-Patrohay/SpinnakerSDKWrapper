@@ -1,12 +1,16 @@
 #ifndef SPINNAKER_SDK_SPINCAMERA_H
 #define SPINNAKER_SDK_SPINCAMERA_H
 
-#include <string>
-#include <iostream>
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDK_SpinOption.h"
 #include "SpinnakerSDK_SpinImage.h"
+#include <string>
+#include <iostream>
+#include <atomic>
+#include <thread>
+#include <chrono>
+#include <unordered_map>
 
 class SpinCamera {
 public:
@@ -23,8 +27,10 @@ public:
     // Aquisition and Capture
     void StartAcquisition();
     void StopAcquisition();
-    SpinImage CaptureSingleFrame();
+    void CaptureSingleFrame(SpinImage&);
+    void CaptureSingleFrameOnTrigger(SpinImage&, std::atomic<bool>&, int);
     void CaptureContinuousFrames(std::vector<SpinImage>&, int);
+    
 
     // Setting Camera Settings
     void SetAcquisitionMode(SpinOption::AcquisitionMode);

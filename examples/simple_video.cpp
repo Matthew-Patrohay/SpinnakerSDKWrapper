@@ -1,3 +1,4 @@
+// Include the Spinnnaker SDK Wrapper header file
 #include "../include/SpinnakerSDK_SpinCamera.h"
 #include <filesystem>
 #include <iostream>

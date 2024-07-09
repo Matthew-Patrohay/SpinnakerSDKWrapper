@@ -1,6 +1,4 @@
 #include "../include/SpinnakerSDK_SpinImage.h"
-#include <iomanip>
-#include <sstream>
 
 SpinImage::SpinImage(Spinnaker::ImagePtr rawImage) : rawImage(rawImage), demosaicedImage(nullptr) {
     if (rawImage) {

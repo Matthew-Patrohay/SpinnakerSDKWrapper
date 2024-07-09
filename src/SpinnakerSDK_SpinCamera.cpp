@@ -1,7 +1,4 @@
 #include "../include/SpinnakerSDK_SpinCamera.h"
-#include "../include/SpinnakerSDK_SpinImage.h"
-#include <iostream>
-#include <unordered_map>
 
 using namespace Spinnaker;
 using namespace GenApi;
@@ -50,10 +47,7 @@ void SpinCamera::StopAcquisition() {
 }
 
 
-SpinImage SpinCamera::CaptureSingleFrame() {
-    // Image to return
-    SpinImage capturedImage(nullptr);
-
+void SpinCamera::CaptureSingleFrame(SpinImage& capturedImage) {
     // Start acquisition if not already active
     bool startedAcquisition = false;
     if (!acquisitionActive) {
@@ -79,9 +73,69 @@ SpinImage SpinCamera::CaptureSingleFrame() {
     if (startedAcquisition) {
         StopAcquisition();
     }
+}
 
-    // Return the image captured
-    return capturedImage;
+// Note that the goal of the CaptureSingleFrameOnTrigger is not to use the 
+// built in "Trigger" mechanisms, as that trigger only triggers the start of
+// acquisition. To capture a frame immediately available on the trigger, a 
+// continuous approach needs to be used.
+void SpinCamera::CaptureSingleFrameOnTrigger(SpinImage& capturedImage, std::atomic<bool>& trigger, int polling_delay_us) {
+    // Start acquisition if not already active
+    bool startedAcquisition = false;
+    if (!acquisitionActive) {
+        // Set acquisition mode to continuous
+        SetAcquisitionMode(SpinOption::AcquisitionMode::Continuous);
+        // Set buffer handling mode to NewestOnly
+        SetBufferHandlingMode(SpinOption::BufferHandlingMode::NewestOnly);
+        StartAcquisition();
+        startedAcquisition = true;
+    }
+
+    // Wait for the trigger to go high
+    while (!trigger.load()) {
+        // Polling delay to reduce CPU usage
+        std::this_thread::sleep_for(std::chrono::microseconds(polling_delay_us));
+    }
+
+    // Capture the time point right after the trigger
+    // auto triggerTime = std::chrono::high_resolution_clock::now();
+
+    // Capture and release the image that was being acquired DURING the trigger
+    Spinnaker::ImagePtr preTriggerImage;
+    if (pCam) {
+        preTriggerImage = pCam->GetNextImage();
+        if (preTriggerImage->IsIncomplete()) {
+            std::cerr << "[ ERROR ] Pre-trigger image incomplete with image status " << preTriggerImage->GetImageStatus() << std::endl;
+        }
+        // Release the image
+        preTriggerImage->Release();
+    }
+
+    // Capture the image immediately after the trigger
+    // This is the first "Legal" image in a situation where the trigger effectively begins aquisition (starts exposure)
+    Spinnaker::ImagePtr postTriggerImage;
+    if (pCam) {
+        postTriggerImage = pCam->GetNextImage();
+        if (postTriggerImage->IsIncomplete()) {
+            std::cerr << "[ ERROR ] Post-trigger image incomplete with image status " << postTriggerImage->GetImageStatus() << std::endl;
+        } else {
+            capturedImage = SpinImage(postTriggerImage);
+        }
+    }
+
+    // Capture the time point right after the image is captured
+    // auto captureTime = std::chrono::high_resolution_clock::now();
+
+    // Calculate and print the duration between the trigger and the image capture
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(captureTime - triggerTime).count();
+    // std::cout << "Duration from trigger to image capture: " << duration << " ms" << std::endl;
+    // double duration2 = postTriggerImage->GetTimeStamp() - preTriggerImage->GetTimeStamp();
+    // std::cout << "Duration between image timestamps: " << duration2/1000000 << " ms" << std::endl;
+
+    // Stop acquisition if it was started by this function
+    if (startedAcquisition) {
+        StopAcquisition();
+    }
 }
 
 void SpinCamera::CaptureContinuousFrames(std::vector<SpinImage>& frames, int numFrames) {
@@ -754,8 +808,33 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
     int finalWidth = width;
     int finalHeight = height;
 
-    // Apply user-selected width
     CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+
+    // Retrieve node pointers for sensor width and height
+    CIntegerPtr ptrSensorWidth = nodeMap->GetNode("SensorWidth");
+    CIntegerPtr ptrSensorHeight = nodeMap->GetNode("SensorHeight");
+
+    // If the sensor width and height nodes are available, use them
+    int sensorWidth = 0;
+    int sensorHeight = 0;
+    if (IsAvailable(ptrSensorWidth) && IsReadable(ptrSensorWidth)) {
+        sensorWidth = static_cast<int>(ptrSensorWidth->GetValue());
+    } else if (IsAvailable(ptrWidth) && IsReadable(ptrWidth)) {
+        // Fallback to using the max value of the Width node if SensorWidth is not available
+        sensorWidth = static_cast<int>(ptrWidth->GetMax());
+    }
+
+    if (IsAvailable(ptrSensorHeight) && IsReadable(ptrSensorHeight)) {
+        sensorHeight = static_cast<int>(ptrSensorHeight->GetValue());
+    } else if (IsAvailable(ptrHeight) && IsReadable(ptrHeight)) {
+        // Fallback to using the max value of the Height node if SensorHeight is not available
+        sensorHeight = static_cast<int>(ptrHeight->GetMax());
+    }
+
+    // Apply user-selected width
     if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
         const int widthMax = static_cast<int>(ptrWidth->GetMax());
         const int widthMin = static_cast<int>(ptrWidth->GetMin());
@@ -775,7 +854,6 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
     }
 
     // Apply user-selected height
-    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
     if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
         const int heightMax = static_cast<int>(ptrHeight->GetMax());
         const int heightMin = static_cast<int>(ptrHeight->GetMin());
@@ -795,10 +873,8 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
     }
 
     // Calculate and set width offset
-    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
     if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
-        int maxWidth = static_cast<int>(ptrWidth->GetMax());
-        int offsetX = (maxWidth - finalWidth) / 2;
+        int offsetX = (sensorWidth - finalWidth) / 2;
 
         ptrWidthOffset->SetValue(offsetX);
         std::cout << "Width offset set to " << offsetX << "." << std::endl;
@@ -807,10 +883,8 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
     }
 
     // Calculate and set height offset
-    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
     if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
-        int maxHeight = static_cast<int>(ptrHeight->GetMax());
-        int offsetY = (maxHeight - finalHeight) / 2;
+        int offsetY = (sensorHeight - finalHeight) / 2;
 
         ptrHeightOffset->SetValue(offsetY);
         std::cout << "Height offset set to " << offsetY << "." << std::endl;
@@ -832,8 +906,33 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
     int finalWidth = width;
     int finalHeight = height;
 
-    // Apply user-selected width
     CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+
+    // Retrieve node pointers for sensor width and height
+    CIntegerPtr ptrSensorWidth = nodeMap->GetNode("SensorWidth");
+    CIntegerPtr ptrSensorHeight = nodeMap->GetNode("SensorHeight");
+
+    // If the sensor width and height nodes are available, use them
+    int sensorWidth = 0;
+    int sensorHeight = 0;
+    if (IsAvailable(ptrSensorWidth) && IsReadable(ptrSensorWidth)) {
+        sensorWidth = static_cast<int>(ptrSensorWidth->GetValue());
+    } else if (IsAvailable(ptrWidth) && IsReadable(ptrWidth)) {
+        // Fallback to using the max value of the Width node if SensorWidth is not available
+        sensorWidth = static_cast<int>(ptrWidth->GetMax());
+    }
+
+    if (IsAvailable(ptrSensorHeight) && IsReadable(ptrSensorHeight)) {
+        sensorHeight = static_cast<int>(ptrSensorHeight->GetValue());
+    } else if (IsAvailable(ptrHeight) && IsReadable(ptrHeight)) {
+        // Fallback to using the max value of the Height node if SensorHeight is not available
+        sensorHeight = static_cast<int>(ptrHeight->GetMax());
+    }
+
+    // Apply user-selected width
     if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
         const int widthMax = static_cast<int>(ptrWidth->GetMax());
         const int widthMin = static_cast<int>(ptrWidth->GetMin());
@@ -853,7 +952,6 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
     }
 
     // Apply user-selected height
-    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
     if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
         const int heightMax = static_cast<int>(ptrHeight->GetMax());
         const int heightMin = static_cast<int>(ptrHeight->GetMin());
@@ -873,9 +971,7 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
     }
 
     // Calculate and set width offset
-    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
     if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
-        const int sensorWidth = static_cast<int>(ptrWidth->GetMax());
         int maxWidthOffset = (sensorWidth - finalWidth);
         int minWidthOffset = 0;
 
@@ -894,9 +990,7 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
     }
 
     // Calculate and set height offset
-    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
     if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
-        const int sensorHeight = static_cast<int>(ptrHeight->GetMax());
         int maxHeightOffset = (sensorHeight - finalHeight);
         int minHeightOffset = 0;
 

@@ -1,11 +1,13 @@
 #ifndef SPINNAKER_SDK_SPINIMAGE_H
 #define SPINNAKER_SDK_SPINIMAGE_H
 
-#include <string>
-#include <vector>
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include "SpinnakerSDK_SpinOption.h"
+#include <string>
+#include <vector>
+#include <iomanip>
+#include <sstream>
 
 class SpinImage {
 public:
