@@ -46,7 +46,6 @@ void SpinCamera::StopAcquisition() {
     acquisitionActive = false;
 }
 
-
 void SpinCamera::CaptureSingleFrame(SpinImage& capturedImage) {
     // Start acquisition if not already active
     bool startedAcquisition = false;
@@ -970,43 +969,7 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
         std::cout << "[ WARNING ] Height setting not available." << std::endl;
     }
 
-    // Calculate and set width offset
-    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
-        int maxWidthOffset = (sensorWidth - finalWidth);
-        int minWidthOffset = 0;
-
-        if (user_width_offset > maxWidthOffset) {
-            user_width_offset = maxWidthOffset;
-            std::cout << "[ NOTE ] Selected width offset exceeds maximum, setting to max allowable: " << user_width_offset << "." << std::endl;
-        } else if (user_width_offset < minWidthOffset) {
-            user_width_offset = minWidthOffset;
-            std::cout << "[ NOTE ] Selected width offset is below minimum, setting to min allowable: " << user_width_offset << "." << std::endl;
-        }
-
-        ptrWidthOffset->SetValue(user_width_offset);
-        std::cout << "Width offset set to " << user_width_offset << "." << std::endl;
-    } else {
-        std::cout << "[ WARNING ] Width offset setting not available." << std::endl;
-    }
-
-    // Calculate and set height offset
-    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
-        int maxHeightOffset = (sensorHeight - finalHeight);
-        int minHeightOffset = 0;
-
-        if (user_height_offset > maxHeightOffset) {
-            user_height_offset = maxHeightOffset;
-            std::cout << "[ NOTE ] Selected height offset exceeds maximum, setting to max allowable: " << user_height_offset << "." << std::endl;
-        } else if (user_height_offset < minHeightOffset) {
-            user_height_offset = minHeightOffset;
-            std::cout << "[ NOTE ] Selected height offset is below minimum, setting to min allowable: " << user_height_offset << "." << std::endl;
-        }
-
-        ptrHeightOffset->SetValue(user_height_offset);
-        std::cout << "Height offset set to " << user_height_offset << "." << std::endl;
-    } else {
-        std::cout << "[ WARNING ] Height offset setting not available." << std::endl;
-    }
+    
 }
 
 void SpinCamera::SetGainSensitivity(SpinOption::GainSensitivity user_option) {
