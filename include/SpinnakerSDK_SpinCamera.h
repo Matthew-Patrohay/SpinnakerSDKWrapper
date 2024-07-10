@@ -41,7 +41,7 @@ public:
     void SetExposureTime(SpinOption::ExposureTime);
     void SetExposureTime(double); 
     void SetImageDimensions(SpinOption::ImageDimensions);
-    void SetImageDimensions(int, int, int, int);
+    void SetImageDimensions(int user_width, int user_height, int user_width_offset=-1, int user_height_offset=-1);
     void SetGainSensitivity(SpinOption::GainSensitivity);
     void SetGainSensitivity(float);
     void SetGammaCorrection(SpinOption::GammaCorrection);

@@ -126,8 +126,8 @@ void SpinCamera::CaptureSingleFrameOnTrigger(SpinImage& capturedImage, std::atom
     // auto captureTime = std::chrono::high_resolution_clock::now();
 
     // Calculate and print the duration between the trigger and the image capture
-    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(captureTime - triggerTime).count();
-    // std::cout << "Duration from trigger to image capture: " << duration << " ms" << std::endl;
+    // double duration = std::chrono::duration_cast<std::chrono::nanoseconds>(captureTime - triggerTime).count();
+    // std::cout << "Duration from trigger to image capture: " << duration/1000000 << " ms" << std::endl;
     // double duration2 = postTriggerImage->GetTimeStamp() - preTriggerImage->GetTimeStamp();
     // std::cout << "Duration between image timestamps: " << duration2/1000000 << " ms" << std::endl;
 
@@ -793,6 +793,32 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
         return;
     }
 
+    // Start by clearing any current image dimentions / offsets
+    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
+        ptrWidthOffset->SetValue(0);
+    } else {
+        std::cout << "[ WARNING ] Width offset setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
+        ptrHeightOffset->SetValue(0);
+    } else {
+        std::cout << "[ WARNING ] Height offset setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
+        ptrWidth->SetValue(static_cast<int>(ptrWidth->GetMax()));
+    } else {
+        std::cout << "[ WARNING ] Width setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
+        ptrHeight->SetValue(static_cast<int>(ptrHeight->GetMax()));
+    } else {
+        std::cout << "[ WARNING ] Height setting not able to be cleared." << std::endl;
+    }
+
     // Get the selected image dimensions from the map
     auto option = ImageDimensions_legal.find(user_option);
     if (option == ImageDimensions_legal.end()) {
@@ -806,11 +832,6 @@ void SpinCamera::SetImageDimensions(SpinOption::ImageDimensions user_option) {
     const int& height = dimensions.second;
     int finalWidth = width;
     int finalHeight = height;
-
-    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
-    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
-    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
-    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
 
     // Retrieve node pointers for sensor width and height
     CIntegerPtr ptrSensorWidth = nodeMap->GetNode("SensorWidth");
@@ -899,16 +920,37 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
         return;
     }
 
+    // Start by clearing any current image dimentions / offsets
+    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
+    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
+    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
+    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
+    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
+        ptrWidthOffset->SetValue(0);
+    } else {
+        std::cout << "[ WARNING ] Width offset setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
+        ptrHeightOffset->SetValue(0);
+    } else {
+        std::cout << "[ WARNING ] Height offset setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrWidth) && IsWritable(ptrWidth)) {
+        ptrWidth->SetValue(static_cast<int>(ptrWidth->GetMax()));
+    } else {
+        std::cout << "[ WARNING ] Width setting not able to be cleared." << std::endl;
+    }
+    if (IsAvailable(ptrHeight) && IsWritable(ptrHeight)) {
+        ptrHeight->SetValue(static_cast<int>(ptrHeight->GetMax()));
+    } else {
+        std::cout << "[ WARNING ] Height setting not able to be cleared." << std::endl;
+    }
+
     // Get width and height
     const int& width = user_width;
     const int& height = user_height;
     int finalWidth = width;
     int finalHeight = height;
-
-    CIntegerPtr ptrWidth = nodeMap->GetNode("Width");
-    CIntegerPtr ptrHeight = nodeMap->GetNode("Height");
-    CIntegerPtr ptrWidthOffset = nodeMap->GetNode("OffsetX");
-    CIntegerPtr ptrHeightOffset = nodeMap->GetNode("OffsetY");
 
     // Retrieve node pointers for sensor width and height
     CIntegerPtr ptrSensorWidth = nodeMap->GetNode("SensorWidth");
@@ -969,6 +1011,40 @@ void SpinCamera::SetImageDimensions(int user_width, int user_height, int user_wi
         std::cout << "[ WARNING ] Height setting not available." << std::endl;
     }
 
+
+    // Calculate and set width offset
+    if (IsAvailable(ptrWidthOffset) && IsWritable(ptrWidthOffset)) {
+        int offsetX;
+
+        // Default is to center the frame
+        if (user_width_offset == -1) {
+            offsetX = (sensorWidth - finalWidth) / 2;
+        } else {
+            offsetX = user_width_offset;
+        }
+        
+        ptrWidthOffset->SetValue(offsetX);
+        std::cout << "Width offset set to " << offsetX << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Width offset setting not available." << std::endl;
+    }
+
+    // Calculate and set height offset
+    if (IsAvailable(ptrHeightOffset) && IsWritable(ptrHeightOffset)) {
+        int offsetY;
+
+        // Default is to center the frame
+        if (user_height_offset == -1) {
+            offsetY = (sensorHeight - finalHeight) / 2;
+        } else {
+            offsetY = user_height_offset;
+        }
+
+        ptrHeightOffset->SetValue(offsetY);
+        std::cout << "Height offset set to " << offsetY << "." << std::endl;
+    } else {
+        std::cout << "[ WARNING ] Height offset setting not available." << std::endl;
+    }
     
 }
 

@@ -85,7 +85,6 @@ void SpinImage::PrintSimpleImageInformation() {
     std::cout << "Frame ID: " << rawImage->GetFrameID() << std::endl;
 }
 
-
 void SpinImage::Demosaic() {
     if (!rawImage || imageData.empty()) {
         std::cerr << "Raw image is invalid or empty." << std::endl;
@@ -163,25 +162,25 @@ void SpinImage::DrawRedSquare(int x, int y, int squareSize) {
 
 void SpinImage::GetPixelRGB(int x, int y, unsigned char& R, unsigned char& G, unsigned char& B) {
     unsigned char* buffer = imageData.data();
-    int rowStride = imageWidth * 3;
+    int rowStride = imageWidth;
 
-    unsigned char* pixel = &buffer[y * rowStride + x];
-    if (x % 2 == 0 && y % 2 == 0) {
-        R = *pixel;
-        G = (*(pixel + 1) + *(pixel + rowStride)) / 2;
-        B = *(pixel + rowStride + 1);
-    } else if (x % 2 == 1 && y % 2 == 0) {
-        G = *pixel;
-        R = *(pixel - 1);
-        B = *(pixel + rowStride);
-    } else if (x % 2 == 0 && y % 2 == 1) {
-        G = *pixel;
-        R = *(pixel + rowStride);
-        B = *(pixel - 1);
-    } else {
-        B = *pixel;
-        G = (*(pixel - 1) + *(pixel - rowStride)) / 2;
-        R = *(pixel - rowStride - 1);
+    // Determine the Bayer pattern based on the position
+    if (x % 2 == 0 && y % 2 == 0) { // Red pixel
+        R = buffer[y * rowStride + x];
+        G = (buffer[y * rowStride + (x + 1)] + buffer[(y + 1) * rowStride + x]) / 2;
+        B = buffer[(y + 1) * rowStride + (x + 1)];
+    } else if (x % 2 == 1 && y % 2 == 0) { // Green pixel on Red row
+        G = buffer[y * rowStride + x];
+        R = buffer[y * rowStride + (x - 1)];
+        B = buffer[(y + 1) * rowStride + x];
+    } else if (x % 2 == 0 && y % 2 == 1) { // Green pixel on Blue row
+        G = buffer[y * rowStride + x];
+        R = buffer[(y - 1) * rowStride + x];
+        B = buffer[y * rowStride + (x + 1)];
+    } else { // Blue pixel
+        B = buffer[y * rowStride + x];
+        G = (buffer[y * rowStride + (x - 1)] + buffer[(y - 1) * rowStride + x]) / 2;
+        R = buffer[(y - 1) * rowStride + (x - 1)];
     }
 }
 
